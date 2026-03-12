@@ -9,8 +9,8 @@ class ProfilController extends Controller
     public function index()
     {
         $data = [
-            "nama" => "Aldiyofani Azzahwa",
-            "nim" => "4124025",
+            "nama" => "Asykaril kafifulloh",
+            "nim" => "4124048",
             "prodi" => "sistem informasi",
             "semester" => "4",
             "keahlian" => ["Laravel", "Java", "MySQL", "Git"]
@@ -21,6 +21,6 @@ class ProfilController extends Controller
 
     public function show($nim)
     {
-        return "<h1>Profil Mahasiswa dengan NIM: 4124025 </h1>";
+        return "<h1>Profil Mahasiswa dengan NIM: 4124048 </h1>";
     }
 }
