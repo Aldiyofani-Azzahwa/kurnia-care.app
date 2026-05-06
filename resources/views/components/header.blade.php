@@ -1,12 +1,17 @@
 <header class="header">
+
     <div class="logo">Kurnia Care</div>
 
-    <nav>
+    <nav id="nav">
         <a href="/">Home</a>
-        <a href="#about">Tentang</a>
+        <a href="#about">Tentang Kami</a>
         <a href="#contact">Kontak</a>
         <a href="/pasien" class="btn-nav">Login</a>
     </nav>
+
+    <!-- HAMBURGER -->
+    <div class="menu-toggle" id="menu-toggle">☰</div>
+
 </header>
 
 <style>
@@ -14,7 +19,7 @@
     position: fixed;
     top: 0;
     width: 100%;
-    padding: 20px 10%;
+    padding: 20px 5%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -29,6 +34,7 @@
     font-size: 20px;
 }
 
+/* NAV DESKTOP */
 .header nav {
     display: flex;
     gap: 25px;
@@ -47,4 +53,50 @@
 .btn-nav {
     color: #00c896;
 }
+
+/* HAMBURGER  */
+.menu-toggle {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .header nav {
+        position: absolute;
+        top: 70px;
+        right: 0;
+        width: 100%;
+        background: black;
+        flex-direction: column;
+        align-items: center;
+        display: none;
+        padding: 20px 0;
+    }
+
+    .header nav.active {
+        display: flex;
+    }
+
+    .header nav a {
+        padding: 10px 0;
+    }
+}
 </style>
+
+<script>
+const toggle = document.getElementById('menu-toggle');
+const nav = document.getElementById('nav');
+
+toggle.onclick = () => {
+    nav.classList.toggle('active');
+};
+</script>
