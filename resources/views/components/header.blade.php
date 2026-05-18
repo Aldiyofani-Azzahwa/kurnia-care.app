@@ -6,7 +6,7 @@
         <a href="/">Home</a>
         <a href="#about">Tentang Kami</a>
         <a href="#contact">Kontak</a>
-        <a href="/pasien" class="btn-nav">Login</a>
+        <a href="/login" class="btn-nav">Login</a>
     </nav>
 
     <!-- HAMBURGER -->
