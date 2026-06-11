@@ -2,48 +2,76 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role',
+        'phone',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Relasi lama: satu user punya satu patient.
+     * Sementara tetap disimpan agar kode lama tidak error.
+     */
+    public function patient(): HasOne
+    {
+        return $this->hasOne(Patient::class);
+    }
+
+    /**
+     * Relasi baru: satu user bisa punya banyak data pasien/pendaftaran.
+     */
+    public function patients(): HasMany
+    {
+        return $this->hasMany(Patient::class);
+    }
+
+    public function doctor(): HasOne
+    {
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function verifiedPayments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'verified_by');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isDoctor(): bool
+    {
+        return $this->role === 'dokter';
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
     }
 }
