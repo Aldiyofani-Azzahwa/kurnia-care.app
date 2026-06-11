@@ -172,7 +172,14 @@
                         Punya Alergi Obat?
                     </label>
 
-                    <textarea name="drug_allergy" rows="2" class="kurnia-form-field">{{ old('drug_allergy') }}</textarea>
+                    <select name="has_drug_allergy" id="has_drug_allergy" class="kurnia-form-field mb-2">
+                        <option value="ya" @selected(old('has_drug_allergy', 'ya') === 'ya')>Ya</option>
+                        <option value="tidak" @selected(old('has_drug_allergy') === 'tidak')>Tidak</option>
+                    </select>
+
+                    <div id="drug_allergy_wrapper" class="{{ old('has_drug_allergy', 'ya') === 'ya' ? '' : 'hidden' }}">
+                        <textarea name="drug_allergy" id="drug_allergy" rows="2" class="kurnia-form-field" placeholder="Jelaskan alergi obat... (contoh: Alergi Amoxicillin)">{{ old('drug_allergy') }}</textarea>
+                    </div>
                 </div>
 
                 <div class="md:col-span-2">
@@ -180,8 +187,14 @@
                         Pernah Luka / Perdarahan Sulit Berhenti?
                     </label>
 
-                    <textarea name="bleeding_history" rows="2"
-                        class="kurnia-form-field">{{ old('bleeding_history') }}</textarea>
+                    <select name="has_bleeding_history" id="has_bleeding_history" class="kurnia-form-field mb-2">
+                        <option value="ya" @selected(old('has_bleeding_history', 'ya') === 'ya')>Ya</option>
+                        <option value="tidak" @selected(old('has_bleeding_history') === 'tidak')>Tidak</option>
+                    </select>
+
+                    <div id="bleeding_history_wrapper" class="{{ old('has_bleeding_history', 'ya') === 'ya' ? '' : 'hidden' }}">
+                        <textarea name="bleeding_history" id="bleeding_history" rows="2" class="kurnia-form-field" placeholder="Jelaskan riwayat perdarahan...">{{ old('bleeding_history') }}</textarea>
+                    </div>
                 </div>
 
                 <div class="md:col-span-2">
@@ -189,8 +202,14 @@
                         Pernah Operasi?
                     </label>
 
-                    <textarea name="surgery_history" rows="2"
-                        class="kurnia-form-field">{{ old('surgery_history') }}</textarea>
+                    <select name="has_surgery_history" id="has_surgery_history" class="kurnia-form-field mb-2">
+                        <option value="ya" @selected(old('has_surgery_history', 'ya') === 'ya')>Ya</option>
+                        <option value="tidak" @selected(old('has_surgery_history') === 'tidak')>Tidak</option>
+                    </select>
+
+                    <div id="surgery_history_wrapper" class="{{ old('has_surgery_history', 'ya') === 'ya' ? '' : 'hidden' }}">
+                        <textarea name="surgery_history" id="surgery_history" rows="2" class="kurnia-form-field" placeholder="Jelaskan riwayat operasi...">{{ old('surgery_history') }}</textarea>
+                    </div>
                 </div>
 
                 <div class="md:col-span-2">
@@ -198,8 +217,14 @@
                         Riwayat Penyakit
                     </label>
 
-                    <textarea name="disease_history" rows="2"
-                        class="kurnia-form-field">{{ old('disease_history') }}</textarea>
+                    <select name="has_disease_history" id="has_disease_history" class="kurnia-form-field mb-2">
+                        <option value="ya" @selected(old('has_disease_history', 'ya') === 'ya')>Ya</option>
+                        <option value="tidak" @selected(old('has_disease_history') === 'tidak')>Tidak</option>
+                    </select>
+
+                    <div id="disease_history_wrapper" class="{{ old('has_disease_history', 'ya') === 'ya' ? '' : 'hidden' }}">
+                        <textarea name="disease_history" id="disease_history" rows="2" class="kurnia-form-field" placeholder="Jelaskan riwayat penyakit...">{{ old('disease_history') }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -315,7 +340,7 @@
                         No HP / WA
                     </label>
 
-                    <input type="text" name="phone" value="{{ old('phone') }}" class="kurnia-form-field">
+                    <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="kurnia-form-field" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
 
                 <div>
@@ -859,6 +884,29 @@
                     }
                 });
             }
+
+            // Toggle Form Riwayat Kesehatan
+            function setupToggle(selectId, wrapperId, textareaId) {
+                const selectElement = document.getElementById(selectId);
+                const wrapperElement = document.getElementById(wrapperId);
+                const textareaElement = document.getElementById(textareaId);
+
+                if (selectElement && wrapperElement && textareaElement) {
+                    selectElement.addEventListener('change', function () {
+                        if (this.value === 'ya') {
+                            wrapperElement.classList.remove('hidden');
+                        } else {
+                            wrapperElement.classList.add('hidden');
+                            textareaElement.value = '';
+                        }
+                    });
+                }
+            }
+
+            setupToggle('has_drug_allergy', 'drug_allergy_wrapper', 'drug_allergy');
+            setupToggle('has_bleeding_history', 'bleeding_history_wrapper', 'bleeding_history');
+            setupToggle('has_surgery_history', 'surgery_history_wrapper', 'surgery_history');
+            setupToggle('has_disease_history', 'disease_history_wrapper', 'disease_history');
 
             resetCity();
             resetDistrict();

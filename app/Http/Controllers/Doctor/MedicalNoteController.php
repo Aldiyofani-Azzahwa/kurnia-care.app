@@ -15,6 +15,11 @@ class MedicalNoteController extends Controller
      */
     public function store(Request $request, Appointment $appointment): RedirectResponse
     {
+        $doctor = auth()->user()->doctor;
+        $doctorId = $doctor ? $doctor->id : 0;
+
+        abort_if(!$appointment->doctor_id || $appointment->doctor_id !== $doctorId, 403, 'Anda tidak memiliki akses ke data pasien ini.');
+
         $validated = $request->validate([
             'action_status' => ['required', 'in:berhasil,perlu_kontrol,gagal,lainnya'],
             'note' => ['required', 'string', 'max:5000'],

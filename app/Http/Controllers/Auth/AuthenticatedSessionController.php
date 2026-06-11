@@ -29,16 +29,30 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = auth()->user();
+        $intendedUrl = redirect()->getIntendedUrl();
+        $path = $intendedUrl ? parse_url($intendedUrl, PHP_URL_PATH) : null;
 
         if ($user->role === 'admin') {
-            return redirect()->intended('/admin/dashboard');
+            if ($path && str_starts_with($path, '/admin')) {
+                return redirect()->intended('/admin/dashboard');
+            }
+            $request->session()->forget('url.intended');
+            return redirect()->route('admin.dashboard');
         }
 
         if ($user->role === 'dokter') {
-            return redirect()->intended('/doctor/dashboard');
+            if ($path && str_starts_with($path, '/doctor')) {
+                return redirect()->intended('/doctor/dashboard');
+            }
+            $request->session()->forget('url.intended');
+            return redirect()->route('doctor.dashboard');
         }
 
-        return redirect()->intended('/user/dashboard');
+        if ($path && str_starts_with($path, '/user')) {
+            return redirect()->intended('/user/dashboard');
+        }
+        $request->session()->forget('url.intended');
+        return redirect()->route('user.dashboard');
     }
 
     /**
