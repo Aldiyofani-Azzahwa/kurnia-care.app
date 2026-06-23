@@ -35,7 +35,7 @@
             </a>
         </div>
 
-        <form action="{{ route('admin.services.update', $service) }}" method="POST" class="space-y-5">
+        <form action="{{ route('admin.services.update', $service) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
             @method('PUT')
 
@@ -72,6 +72,45 @@
                     value="{{ old('duration_minutes', $service->duration_minutes) }}" min="1" step="1"
                     placeholder="Contoh: 30"
                     class="w-full h-12 rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+                    <div>
+    <label class="block text-sm font-medium mb-1">
+        Gambar Layanan
+    </label>
+
+    @if ($service->image)
+        <div class="mb-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <img
+                src="{{ asset('storage/' . $service->image) }}"
+                alt="{{ $service->name }}"
+                class="h-40 w-full rounded-lg object-cover"
+            >
+
+            <label class="mt-3 flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="remove_image"
+                    value="1"
+                    class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                >
+
+                <span class="text-sm font-medium text-gray-700">
+                    Hapus gambar layanan saat ini
+                </span>
+            </label>
+        </div>
+    @endif
+
+    <input
+        type="file"
+        name="image"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        class="w-full rounded-lg border border-gray-400 bg-white px-4 py-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
+    >
+
+    <p class="text-xs text-gray-500 mt-1">
+        Kosongkan jika tidak ingin mengganti gambar.
+    </p>
+</div>
 
                 <p class="text-xs text-gray-500 mt-1">
                     Durasi dalam menit.
@@ -79,6 +118,45 @@
             </div>
 
             <div>
+                <div>
+    <label class="block text-sm font-medium mb-1">
+        Gambar Layanan
+    </label>
+
+    @if ($service->image)
+        <div class="mb-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <img
+                src="{{ asset('storage/' . $service->image) }}"
+                alt="{{ $service->name }}"
+                class="h-40 w-full rounded-lg object-cover"
+            >
+
+            <label class="mt-3 flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="remove_image"
+                    value="1"
+                    class="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                >
+
+                <span class="text-sm font-medium text-gray-700">
+                    Hapus gambar layanan saat ini
+                </span>
+            </label>
+        </div>
+    @endif
+
+    <input
+        type="file"
+        name="image"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        class="w-full rounded-lg border border-gray-400 bg-white px-4 py-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
+    >
+
+    <p class="mt-1 text-xs text-gray-500">
+        Kosongkan jika tidak ingin mengganti gambar.
+    </p>
+</div>
                 <label class="block text-sm font-medium mb-1">
                     Deskripsi
                 </label>
