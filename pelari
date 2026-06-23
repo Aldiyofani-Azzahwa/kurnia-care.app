@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animasi Kotak</title>
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#1e293b;
+}
+
+.kotak{
+    width:100px;
+    height:100px;
+    background:#3b82f6;
+    animation: animasiKotak 3s infinite ease-in-out;
+}
+
+@keyframes animasiKotak{
+    0%{
+        transform:translateX(-200px) rotate(0deg);
+        background:#3b82f6;
+    }
+    25%{
+        transform:translateY(-150px) rotate(90deg);
+        background:#22c55e;
+    }
+    50%{
+        transform:translateX(200px) rotate(180deg);
+        background:#eab308;
+    }
+    75%{
+        transform:translateY(150px) rotate(270deg);
+        background:#f97316;
+    }
+    100%{
+        transform:translateX(-200px) rotate(360deg);
+        background:#ef4444;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="kotak"></div>
+
+</body>
+</html>
