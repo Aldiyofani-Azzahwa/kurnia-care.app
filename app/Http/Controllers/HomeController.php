@@ -24,7 +24,9 @@ class HomeController extends Controller
 
         $services = Service::where('is_active', true)
             ->latest()
-            ->take(6)
+            ->get();
+        $services = Service::where('is_active', true)
+            ->latest()
             ->get();
 
         $galleries = Gallery::where('is_active', true)
@@ -56,8 +58,7 @@ class HomeController extends Controller
             'clinicEmail' => config('mail.from.address') !== 'hello@example.com'
                 ? config('mail.from.address')
                 : 'Email belum diatur',
-                'pricelistImageUrl' => asset('images/pricelist-kurnia-care.jpg'),
-                'pricelistImageUrl' => asset('images/pricelist-kurnia-care.jpg'),
+            'pricelistImageUrl' => asset('images/pricelist-kurnia-care.jpg'),
         ]);
     }
 }

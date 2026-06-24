@@ -21,21 +21,26 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
             <h3 class="text-lg font-semibold text-emerald-700">
-                Tambah Layanan / Paket Khitan
+                Tambah Layanan
             </h3>
 
             <p class="text-sm text-gray-500">
-                Tambahkan layanan baru yang akan tampil di form pendaftaran pasien.
+                Tambahkan layanan khitan yang akan ditampilkan di sistem.
             </p>
         </div>
 
         <a href="{{ route('admin.services.index') }}"
-           class="px-5 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-center">
+            class="px-5 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-center">
             Kembali
         </a>
     </div>
 
-    <form action="{{ route('admin.services.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+    <form
+        action="{{ route('admin.services.store') }}"
+        method="POST"
+        enctype="multipart/form-data"
+        class="space-y-5"
+    >
         @csrf
 
         <div>
@@ -47,22 +52,24 @@
                 type="text"
                 name="name"
                 value="{{ old('name') }}"
-                placeholder="Contoh: Paket Khitan Premium"
+                placeholder="Contoh: Paket Khitan Modern"
                 class="w-full h-12 rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
             >
+
+            @error('name')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <div>
             <label class="block text-sm font-medium mb-1">
-                Harga
+                Harga Layanan
             </label>
 
             <input
                 type="number"
                 name="price"
                 value="{{ old('price') }}"
-                min="0"
-                step="1"
                 placeholder="Contoh: 750000"
                 class="w-full h-12 rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
             >
@@ -70,6 +77,10 @@
             <p class="text-xs text-gray-500 mt-1">
                 Isi angka saja, tanpa titik atau Rp.
             </p>
+
+            @error('price')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <div>
@@ -81,60 +92,55 @@
                 type="number"
                 name="duration_minutes"
                 value="{{ old('duration_minutes', 30) }}"
-                min="1"
-                step="1"
                 placeholder="Contoh: 30"
                 class="w-full h-12 rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
             >
-            <div>
-    <label class="block text-sm font-medium mb-1">
-        Gambar Layanan
-    </label>
-
-    <input
-        type="file"
-        name="image"
-        accept="image/png,image/jpeg,image/jpg,image/webp"
-        class="w-full rounded-lg border border-gray-400 bg-white px-4 py-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
-    >
-
-    <p class="text-xs text-gray-500 mt-1">
-        Format jpg, jpeg, png, atau webp. Maksimal 2 MB.
-    </p>
-</div>
 
             <p class="text-xs text-gray-500 mt-1">
                 Durasi dalam menit.
             </p>
+
+            @error('duration_minutes')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <div>
-            <div>
-    <label class="block text-sm font-medium mb-1">
-        Gambar Layanan
-    </label>
+            <label class="block text-sm font-medium mb-1">
+                Gambar Layanan
+            </label>
 
-    <input
-        type="file"
-        name="image"
-        accept="image/png,image/jpeg,image/jpg,image/webp"
-        class="w-full rounded-lg border border-gray-400 bg-white px-4 py-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
-    >
+            <input
+                type="file"
+                name="image"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                class="w-full rounded-lg border border-gray-400 bg-white px-4 py-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
+            >
 
-    <p class="mt-1 text-xs text-gray-500">
-        Format jpg, jpeg, png, atau webp. Maksimal 2 MB.
-    </p>
-</div>
+            <p class="text-xs text-gray-500 mt-1">
+                Format jpg, jpeg, png, atau webp. Maksimal 2 MB.
+            </p>
+
+            @error('image')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
             <label class="block text-sm font-medium mb-1">
                 Deskripsi
             </label>
 
             <textarea
                 name="description"
-                rows="4"
+                rows="5"
                 placeholder="Contoh: Paket khitan modern dengan pelayanan standar klinik."
                 class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"
             >{{ old('description') }}</textarea>
+
+            @error('description')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -153,22 +159,23 @@
             </label>
 
             <p class="text-xs text-gray-500 mt-2">
-                Jika aktif, layanan ini akan muncul di form pendaftaran pasien.
+                Jika aktif, layanan ini dapat dipilih oleh pasien saat melakukan pendaftaran.
             </p>
         </div>
 
         <div class="flex flex-col md:flex-row gap-3 md:justify-end pt-4">
             <a href="{{ route('admin.services.index') }}"
-               class="px-5 py-3 text-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                class="px-5 py-3 text-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
                 Batal
             </a>
 
-            <button type="submit"
-                    class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700">
+            <button
+                type="submit"
+                class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700"
+            >
                 Simpan Layanan
             </button>
         </div>
-
     </form>
 
 </div>

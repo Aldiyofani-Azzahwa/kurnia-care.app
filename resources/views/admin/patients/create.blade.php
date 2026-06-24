@@ -1,15 +1,15 @@
 @extends('layouts.admin')
 
-@section('title', 'Tambah Pasien')
+@section('title', 'Tambah Pasien Offline')
 
 @section('content')
 
     @if (session('error'))
-        <div class="mb-6 rounded-lg bg-red-100 border border-red-300 text-red-700 px-4 py-3">
+        <div class="mb-6 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-red-700">
             {{ session('error') }}
 
             @if (session('nearest_date'))
-                <div class="mt-2">
+                <div class="mt-2 text-sm">
                     Rekomendasi jadwal terdekat:
                     <strong>{{ session('nearest_date') }}</strong>
                 </div>
@@ -18,10 +18,10 @@
     @endif
 
     @if ($errors->any())
-        <div class="mb-6 rounded-lg bg-red-100 border border-red-300 text-red-700 px-4 py-3">
+        <div class="mb-6 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-red-700">
             <strong>Data belum lengkap.</strong>
 
-            <ul class="mt-2 list-disc list-inside text-sm">
+            <ul class="mt-2 list-inside list-disc text-sm">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -29,18 +29,19 @@
         </div>
     @endif
 
-    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
             <h3 class="text-xl font-bold text-emerald-700">
                 Tambah Pasien Offline
             </h3>
+
             <p class="text-sm text-gray-500">
                 Form ini digunakan admin untuk mendaftarkan pasien yang datang langsung ke klinik.
             </p>
         </div>
 
         <a href="{{ route('admin.patients.index') }}"
-            class="px-5 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-center">
+            class="rounded-lg bg-gray-200 px-5 py-3 text-center text-gray-700 hover:bg-gray-300">
             Kembali
         </a>
     </div>
@@ -48,23 +49,488 @@
     <form action="{{ route('admin.patients.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
-        @include('admin.patients.form')
+        {{-- DATA ANAK --}}
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-emerald-700">
+                Data Anak
+            </h3>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Nama Anak
+                    </label>
+
+                    <input
+                        type="text"
+                        name="child_name"
+                        value="{{ old('child_name') }}"
+                        placeholder="Contoh: Muhammad Rizky"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('child_name')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Umur Anak
+                    </label>
+
+                    <input
+                        type="number"
+                        name="child_age"
+                        value="{{ old('child_age') }}"
+                        placeholder="Contoh: 7"
+                        min="1"
+                        max="60"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('child_age')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Berat Badan
+                    </label>
+
+                    <input
+                        type="number"
+                        step="0.1"
+                        name="child_weight"
+                        value="{{ old('child_weight') }}"
+                        placeholder="Contoh: 25"
+                        min="1"
+                        max="200"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('child_weight')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Foto Anak
+                    </label>
+
+                    <input
+                        type="file"
+                        name="child_photo"
+                        accept="image/png,image/jpeg,image/jpg"
+                        class="w-full rounded-lg border border-gray-400 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    <p class="mt-1 text-xs text-gray-500">
+                        JPG/PNG maksimal 5MB.
+                    </p>
+
+                    @error('child_photo')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        {{-- RIWAYAT KESEHATAN --}}
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-emerald-700">
+                Riwayat Kesehatan
+            </h3>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Punya Alergi Obat?
+                    </label>
+
+                    <select
+                        name="drug_allergy_status"
+                        data-target="drug_allergy_field"
+                        data-textarea="drug_allergy"
+                        class="health-status h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                        <option value="Ya" @selected(old('drug_allergy_status', old('drug_allergy') ? 'Ya' : 'Ya') === 'Ya')>
+                            Ya
+                        </option>
+
+                        <option value="Tidak" @selected(old('drug_allergy_status') === 'Tidak')>
+                            Tidak
+                        </option>
+                    </select>
+
+                    <div id="drug_allergy_field" class="mt-2">
+                        <textarea
+                            name="drug_allergy"
+                            id="drug_allergy"
+                            rows="3"
+                            placeholder="Jelaskan alergi obat... (contoh: Alergi Amoxicillin)"
+                            class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        >{{ old('drug_allergy') }}</textarea>
+                    </div>
+
+                    @error('drug_allergy')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Pernah Luka / Perdarahan Sulit Berhenti?
+                    </label>
+
+                    <select
+                        name="bleeding_history_status"
+                        data-target="bleeding_history_field"
+                        data-textarea="bleeding_history"
+                        class="health-status h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                        <option value="Ya" @selected(old('bleeding_history_status', old('bleeding_history') ? 'Ya' : 'Ya') === 'Ya')>
+                            Ya
+                        </option>
+
+                        <option value="Tidak" @selected(old('bleeding_history_status') === 'Tidak')>
+                            Tidak
+                        </option>
+                    </select>
+
+                    <div id="bleeding_history_field" class="mt-2">
+                        <textarea
+                            name="bleeding_history"
+                            id="bleeding_history"
+                            rows="3"
+                            placeholder="Jelaskan riwayat perdarahan..."
+                            class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        >{{ old('bleeding_history') }}</textarea>
+                    </div>
+
+                    @error('bleeding_history')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Pernah Operasi?
+                    </label>
+
+                    <select
+                        name="surgery_history_status"
+                        data-target="surgery_history_field"
+                        data-textarea="surgery_history"
+                        class="health-status h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                        <option value="Ya" @selected(old('surgery_history_status', old('surgery_history') ? 'Ya' : 'Ya') === 'Ya')>
+                            Ya
+                        </option>
+
+                        <option value="Tidak" @selected(old('surgery_history_status') === 'Tidak')>
+                            Tidak
+                        </option>
+                    </select>
+
+                    <div id="surgery_history_field" class="mt-2">
+                        <textarea
+                            name="surgery_history"
+                            id="surgery_history"
+                            rows="3"
+                            placeholder="Jelaskan riwayat operasi..."
+                            class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        >{{ old('surgery_history') }}</textarea>
+                    </div>
+
+                    @error('surgery_history')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Riwayat Penyakit
+                    </label>
+
+                    <select
+                        name="disease_history_status"
+                        data-target="disease_history_field"
+                        data-textarea="disease_history"
+                        class="health-status h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                        <option value="Ya" @selected(old('disease_history_status', old('disease_history') ? 'Ya' : 'Ya') === 'Ya')>
+                            Ya
+                        </option>
+
+                        <option value="Tidak" @selected(old('disease_history_status') === 'Tidak')>
+                            Tidak
+                        </option>
+                    </select>
+
+                    <div id="disease_history_field" class="mt-2">
+                        <textarea
+                            name="disease_history"
+                            id="disease_history"
+                            rows="3"
+                            placeholder="Jelaskan riwayat penyakit..."
+                            class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        >{{ old('disease_history') }}</textarea>
+                    </div>
+
+                    @error('disease_history')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        {{-- DATA ORANG TUA --}}
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-emerald-700">
+                Data Orang Tua / Wali
+            </h3>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Nama Ayah
+                    </label>
+
+                    <input
+                        type="text"
+                        name="father_name"
+                        value="{{ old('father_name') }}"
+                        placeholder="Contoh: Bapak Ahmad"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('father_name')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Nama Ibu
+                    </label>
+
+                    <input
+                        type="text"
+                        name="mother_name"
+                        value="{{ old('mother_name') }}"
+                        placeholder="Contoh: Ibu Siti"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('mother_name')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Nomor HP / WhatsApp
+                    </label>
+
+                    <input
+                        type="text"
+                        name="phone"
+                        value="{{ old('phone') }}"
+                        placeholder="Contoh: 082285662642"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('phone')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Instagram
+                    </label>
+
+                    <input
+                        type="text"
+                        name="instagram"
+                        value="{{ old('instagram') }}"
+                        placeholder="Contoh: @namaakun"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Facebook
+                    </label>
+
+                    <input
+                        type="text"
+                        name="facebook"
+                        value="{{ old('facebook') }}"
+                        placeholder="Contoh: Nama Facebook"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">
+                        Sumber Informasi
+                    </label>
+
+                    <select
+                        name="information_source"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+                        <option value="">Pilih sumber informasi</option>
+                        <option value="Instagram" @selected(old('information_source') === 'Instagram')>Instagram</option>
+                        <option value="Facebook" @selected(old('information_source') === 'Facebook')>Facebook</option>
+                        <option value="Google" @selected(old('information_source') === 'Google')>Google</option>
+                        <option value="Lainnya" @selected(old('information_source') === 'Lainnya')>Lainnya</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {{-- ALAMAT PASIEN --}}
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-emerald-700">
+                Alamat Pasien
+            </h3>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="relative">
+                    <label class="mb-1 block text-sm font-medium">
+                        Provinsi
+                    </label>
+
+                    <input
+                        type="text"
+                        id="province_search"
+                        value="{{ old('province_name') }}"
+                        autocomplete="off"
+                        placeholder="Ketik provinsi, contoh: Jawa Timur"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    <div
+                        id="province_dropdown"
+                        class="region-dropdown hidden absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-emerald-100 bg-white shadow-lg"
+                    ></div>
+
+                    <input type="hidden" name="province_code" id="province_code" value="{{ old('province_code') }}">
+                    <input type="hidden" name="province_name" id="province_name" value="{{ old('province_name') }}">
+
+                    @error('province_code')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="relative">
+                    <label class="mb-1 block text-sm font-medium">
+                        Kabupaten / Kota
+                    </label>
+
+                    <input
+                        type="text"
+                        id="city_search"
+                        value="{{ old('city_name') }}"
+                        autocomplete="off"
+                        placeholder="Pilih provinsi dulu"
+                        disabled
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:bg-gray-100"
+                    >
+
+                    <div
+                        id="city_dropdown"
+                        class="region-dropdown hidden absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-emerald-100 bg-white shadow-lg"
+                    ></div>
+
+                    <input type="hidden" name="city_code" id="city_code" value="{{ old('city_code') }}">
+                    <input type="hidden" name="city_name" id="city_name" value="{{ old('city_name') }}">
+
+                    @error('city_code')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="relative">
+                    <label class="mb-1 block text-sm font-medium">
+                        Kecamatan
+                    </label>
+
+                    <input
+                        type="text"
+                        id="district_search"
+                        value="{{ old('district_name') }}"
+                        autocomplete="off"
+                        placeholder="Pilih kabupaten/kota dulu"
+                        disabled
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:bg-gray-100"
+                    >
+
+                    <div
+                        id="district_dropdown"
+                        class="region-dropdown hidden absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-emerald-100 bg-white shadow-lg"
+                    ></div>
+
+                    <input type="hidden" name="district_code" id="district_code" value="{{ old('district_code') }}">
+                    <input type="hidden" name="district_name" id="district_name" value="{{ old('district_name') }}">
+
+                    @error('district_code')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="relative">
+                    <label class="mb-1 block text-sm font-medium">
+                        Desa / Kelurahan
+                    </label>
+
+                    <input
+                        type="text"
+                        id="village_search"
+                        value="{{ old('village_name') }}"
+                        autocomplete="off"
+                        placeholder="Pilih kecamatan dulu"
+                        disabled
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:bg-gray-100"
+                    >
+
+                    <div
+                        id="village_dropdown"
+                        class="region-dropdown hidden absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-emerald-100 bg-white shadow-lg"
+                    ></div>
+
+                    <input type="hidden" name="village_code" id="village_code" value="{{ old('village_code') }}">
+                    <input type="hidden" name="village_name" id="village_name" value="{{ old('village_name') }}">
+
+                    @error('village_code')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
 
         {{-- DATA KHITAN --}}
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold mb-4 text-emerald-700">
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-emerald-700">
                 Data Khitan
             </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                    <label class="block text-sm font-medium mb-1">
+                    <label class="mb-1 block text-sm font-medium">
                         Layanan / Paket
                     </label>
 
-                    <select name="service_id"
-                        class="w-full h-12 text-sm rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+                    <select
+                        name="service_id"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
                         <option value="">Pilih layanan</option>
 
                         @foreach ($services as $service)
@@ -73,64 +539,92 @@
                             </option>
                         @endforeach
                     </select>
+
+                    @error('service_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">
+                    <label class="mb-1 block text-sm font-medium">
                         Tanggal Khitan
                     </label>
 
-                    <input type="date" id="appointment_date" name="appointment_date" value="{{ old('appointment_date') }}"
+                    <input
+                        type="date"
+                        id="appointment_date"
+                        name="appointment_date"
+                        value="{{ old('appointment_date') }}"
                         min="{{ now()->format('Y-m-d') }}"
-                        class="w-full h-12 text-sm rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
 
                     <div id="quota-message" class="mt-2 text-sm"></div>
+
+                    @error('appointment_date')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">
+                    <label class="mb-1 block text-sm font-medium">
                         Jam Khitan
                     </label>
 
-                    <input type="time" name="appointment_time" value="{{ old('appointment_time') }}"
-                        class="w-full h-12 text-sm rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+                    <input
+                        type="time"
+                        name="appointment_time"
+                        value="{{ old('appointment_time') }}"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
+
+                    @error('appointment_time')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">
+                    <label class="mb-1 block text-sm font-medium">
                         Jenis Obat
                     </label>
 
-                    <select name="medicine_type"
-                        class="w-full h-12 text-sm rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+                    <select
+                        name="medicine_type"
+                        class="h-12 w-full rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    >
                         <option value="">Pilih obat</option>
                         <option value="puyer" @selected(old('medicine_type') === 'puyer')>Puyer</option>
                         <option value="tablet" @selected(old('medicine_type') === 'tablet')>Tablet</option>
                         <option value="syrup" @selected(old('medicine_type') === 'syrup')>Syrup</option>
                     </select>
+
+                    @error('medicine_type')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
 
         {{-- KETERSEDIAAN JADWAL --}}
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold mb-4 text-emerald-700">
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-emerald-700">
                 Ketersediaan Jadwal 14 Hari
             </h3>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
                 @foreach ($availableDates as $date)
                     <div
-                        class="rounded-lg border p-3 {{ $date['is_full'] ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200' }}">
+                        class="rounded-lg border p-3 {{ $date['is_full'] ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50' }}"
+                    >
                         <p class="text-sm font-semibold">
                             {{ $date['date'] }}
                         </p>
 
-                        <p class="text-xs mt-1">
+                        <p class="mt-1 text-xs">
                             Sisa kuota: {{ $date['remaining_quota'] }}
                         </p>
 
-                        <p class="text-xs mt-1 font-semibold {{ $date['is_full'] ? 'text-red-600' : 'text-emerald-600' }}">
+                        <p class="mt-1 text-xs font-semibold {{ $date['is_full'] ? 'text-red-600' : 'text-emerald-600' }}">
                             {{ $date['is_full'] ? 'Penuh' : 'Tersedia' }}
                         </p>
                     </div>
@@ -139,21 +633,20 @@
         </div>
 
         {{-- BUTTON --}}
-        <div class="flex flex-col md:flex-row gap-3 md:justify-end pt-4">
+        <div class="flex flex-col gap-3 pt-4 md:flex-row md:justify-end">
             <a href="{{ route('admin.patients.index') }}"
-                class="px-5 py-3 text-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                class="rounded-lg bg-gray-200 px-5 py-3 text-center text-gray-700 hover:bg-gray-300">
                 Batal
             </a>
 
-            <button type="submit" class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700">
+            <button
+                type="submit"
+                class="rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
+            >
                 Simpan Pendaftaran
             </button>
         </div>
     </form>
-
-    {{-- TOM SELECT UNTUK DROPDOWN SEARCHABLE --}}
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
 
     <style>
         .region-dropdown::-webkit-scrollbar {
@@ -196,8 +689,47 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('Custom dropdown wilayah admin pasien berjalan');
+            /*
+            |--------------------------------------------------------------------------
+            | DROPDOWN RIWAYAT KESEHATAN
+            |--------------------------------------------------------------------------
+            */
+            const healthSelects = document.querySelectorAll('.health-status');
 
+            function syncHealthField(select) {
+                const targetId = select.dataset.target;
+                const textareaId = select.dataset.textarea;
+
+                const target = document.getElementById(targetId);
+                const textarea = document.getElementById(textareaId);
+
+                if (!target || !textarea) {
+                    return;
+                }
+
+                if (select.value === 'Ya') {
+                    target.classList.remove('hidden');
+                    textarea.disabled = false;
+                } else {
+                    target.classList.add('hidden');
+                    textarea.disabled = true;
+                    textarea.value = '';
+                }
+            }
+
+            healthSelects.forEach(function (select) {
+                syncHealthField(select);
+
+                select.addEventListener('change', function () {
+                    syncHealthField(select);
+                });
+            });
+
+            /*
+            |--------------------------------------------------------------------------
+            | CUSTOM DROPDOWN WILAYAH
+            |--------------------------------------------------------------------------
+            */
             const provinceSearch = document.getElementById('province_search');
             const citySearch = document.getElementById('city_search');
             const districtSearch = document.getElementById('district_search');
@@ -273,7 +805,6 @@
 
                 data.forEach(function (item) {
                     const option = document.createElement('div');
-
                     option.className = 'region-option';
                     option.textContent = item.name;
 
@@ -561,6 +1092,11 @@
                 }
             });
 
+            /*
+            |--------------------------------------------------------------------------
+            | CEK KUOTA
+            |--------------------------------------------------------------------------
+            */
             if (appointmentDateInput && quotaMessage) {
                 appointmentDateInput.addEventListener('change', async function () {
                     const date = this.value;
@@ -573,17 +1109,17 @@
                     try {
                         quotaMessage.innerHTML = '<span class="text-gray-500">Mengecek kuota...</span>';
 
-                        const data = await fetchJson(`/admin/patients/check-quota?date=${date}`);
+                        const data = await fetchJson(`/admin/patients/check-quota?date=${encodeURIComponent(date)}`);
 
                         if (data.is_full) {
                             quotaMessage.innerHTML = `
-                                <span class="text-red-600 font-medium">
+                                <span class="font-medium text-red-600">
                                     Kuota tanggal ini sudah penuh.
                                 </span>
                             `;
                         } else {
                             quotaMessage.innerHTML = `
-                                <span class="text-emerald-600 font-medium">
+                                <span class="font-medium text-emerald-600">
                                     Sisa kuota: ${data.remaining_quota} pasien.
                                 </span>
                             `;
@@ -600,10 +1136,16 @@
                 });
             }
 
-            resetCity();
-            resetDistrict();
-            resetVillage();
-            loadProvinces();
+            async function initRegions() {
+                resetCity();
+                resetDistrict();
+                resetVillage();
+
+                await loadProvinces();
+            }
+
+            initRegions();
         });
     </script>
+
 @endsection

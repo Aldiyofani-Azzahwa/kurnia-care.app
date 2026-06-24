@@ -608,13 +608,12 @@
                     class="relative max-h-[92vh] w-full max-w-5xl overflow-auto rounded-[2rem] bg-white p-3 shadow-2xl"
                 >
                     <button
-                        type="button"
-                        @click="previewImage = null"
-                        class="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-700 shadow-md hover:bg-gray-100"
-                    >
-                        ×
-                    </button>
-
+    type="button"
+    @click="previewImage = null"
+    class="absolute right-5 top-20 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-700 shadow-md hover:bg-gray-100 md:top-20"
+>
+    ×
+</button>
                     <div class="rounded-[1.5rem] bg-gray-100 p-3">
                         <img
                             :src="previewImage"
@@ -691,52 +690,140 @@
                 </div>
             </section>
 
-            <section id="galeri" class="kc-section bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 py-20">
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="reveal max-w-3xl">
-                        <p class="text-sm font-bold uppercase tracking-wide text-amber-600">Dokumentasi</p>
-                        <h2 class="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                            Momen Bahagia Bersama Kurnia Care
-                        </h2>
-                        <p class="mt-4 leading-7 text-gray-600">
-                            Dokumentasi pasien setelah tindakan, foto bersama keluarga, foto bersama dokter, dan dokumentasi kegiatan.
+          <section id="galeri" class="kc-section bg-gradient-to-br from-emerald-50 via-white to-emerald-100/60 py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="reveal">
+            <p class="text-sm font-bold uppercase tracking-wide text-amber-600">
+                Dokumentasi
+            </p>
+
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Momen Bahagia Bersama Kurnia Care
+            </h2>
+
+            <p class="mt-4 max-w-3xl leading-7 text-gray-600">
+                Dokumentasi pasien setelah tindakan, foto bersama keluarga, foto bersama dokter, dan dokumentasi kegiatan.
+            </p>
+
+            <div class="kc-gold-line mt-5 h-1 w-24 rounded-full"></div>
+        </div>
+
+        <div
+            x-data="{
+                showAllGallery: false,
+                galleryImage: null,
+                galleryTitle: '',
+                galleryDescription: ''
+            }"
+            x-effect="document.body.classList.toggle('overflow-hidden', !!galleryImage)"
+            class="mt-10"
+        >
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:gap-3 lg:grid-cols-4">
+                @forelse ($galleries as $index => $gallery)
+                    <button
+                        type="button"
+                        x-show="showAllGallery || {{ $index < 4 ? 'true' : 'false' }}"
+                        x-transition
+                        @if ($index >= 4) x-cloak @endif
+                        @click="
+                            if (window.innerWidth < 768) {
+                                galleryImage = @js(asset('storage/' . $gallery->image));
+                                galleryTitle = @js($gallery->title);
+                                galleryDescription = @js($gallery->description ?? '');
+                            }
+                        "
+                        class="reveal group relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-xl md:pointer-events-none md:cursor-default"
+                    >
+                        <img
+                            src="{{ asset('storage/' . $gallery->image) }}"
+                            alt="{{ $gallery->title }}"
+                            class="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
+                        >
+
+                        <div class="absolute inset-0 bg-black/0 transition group-hover:bg-black/25 md:hidden"></div>
+
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100 md:hidden">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-emerald-700 shadow-lg">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553 4.553a1 1 0 0 1 0 1.414L16 19.52M9 14l-4.553-4.553a1 1 0 0 1 0-1.414L8 4.48M14 4h6m0 0v6m0-6L10 14M10 20H4m0 0v-6m0 6 10-10" />
+                                </svg>
+                            </div>
+                        </div>
+                    </button>
+                @empty
+                    <div class="rounded-3xl border border-dashed border-gray-200 bg-white p-8 text-center sm:col-span-3 lg:col-span-4">
+                        <p class="font-bold text-gray-900">
+                            Dokumentasi belum tersedia.
                         </p>
-                        <div class="kc-gold-line mt-5 h-1 w-24 rounded-full"></div>
-                    </div>
 
-                    <div class="mt-10 columns-1 gap-5 sm:columns-2 lg:columns-3">
-                        @forelse ($galleries as $gallery)
-                            <figure class="reveal mb-5 break-inside-avoid overflow-hidden rounded-3xl bg-gray-100 shadow-sm ring-1 ring-gray-100">
-                                <img src="{{ asset('storage/' . $gallery->image) }}" alt="{{ $gallery->title }}" class="w-full object-cover transition duration-500 hover:scale-105">
-                                <figcaption class="bg-white p-4">
-                                    <p class="font-bold text-gray-900">{{ $gallery->title }}</p>
-                                    @if ($gallery->description)
-                                        <p class="mt-1 text-sm text-gray-500">{{ $gallery->description }}</p>
-                                    @endif
-                                </figcaption>
-                            </figure>
-                        @empty
-                            @foreach (range(1, 6) as $item)
-                                <div class="reveal mb-5 break-inside-avoid rounded-3xl border border-dashed border-amber-200 bg-gradient-to-br from-emerald-50 to-amber-50 p-8 text-center">
-                                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
-                                        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4-4 4 4 4-5 4 5M4 5h16v14H4V5Z" />
-                                        </svg>
-                                    </div>
-                                    <p class="mt-5 font-bold text-gray-900">Dokumentasi {{ $item }}</p>
-                                    <p class="mt-2 text-sm text-gray-500">
-                                        Foto akan tampil setelah data galeri pasien dan keluarga ditambahkan.
-                                    </p>
-                                </div>
-                            @endforeach
-                        @endforelse
+                        <p class="mt-2 text-sm text-gray-500">
+                            Tambahkan dokumentasi dari Dashboard Admin agar tampil di homepage.
+                        </p>
                     </div>
+                @endforelse
+            </div>
 
-                    <p class="reveal mt-6 rounded-2xl bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800">
-                        Dokumentasi ditampilkan atas izin pasien dan keluarga.
-                    </p>
+            @if ($galleries->count() > 4)
+                <div class="mt-10 flex justify-center">
+                    <button
+                        type="button"
+                        @click="showAllGallery = !showAllGallery"
+                        class="rounded-2xl border border-amber-200 bg-white px-6 py-3 text-sm font-bold text-gray-800 shadow-sm transition hover:border-amber-300 hover:bg-amber-50 hover:text-emerald-700"
+                    >
+                        <span x-show="!showAllGallery">Lihat Selengkapnya ↓</span>
+                        <span x-cloak x-show="showAllGallery">Lihat Lebih Sedikit ↑</span>
+                    </button>
                 </div>
-            </section>
+            @endif
+
+            <div
+                x-cloak
+                x-show="galleryImage"
+                x-transition.opacity
+                @keydown.escape.window="galleryImage = null"
+                @click.self="galleryImage = null"
+                class="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-gray-900/85 px-4 py-6 backdrop-blur-sm"
+            >
+                <button
+                    type="button"
+                    @click="galleryImage = null"
+                    class="fixed right-5 top-6 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl font-bold leading-none text-gray-700 shadow-lg ring-1 ring-gray-200 transition hover:bg-red-50 hover:text-red-600 md:top-24"
+                    aria-label="Tutup galeri"
+                >
+                    ×
+                </button>
+
+                <div
+                    x-transition
+                    @click.stop
+                    class="flex max-h-[92vh] max-w-[90vw] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-2xl"
+                >
+                    <div class="flex items-center justify-center bg-gray-100 p-3">
+                        <img
+                            :src="galleryImage"
+                            :alt="galleryTitle"
+                            class="block max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
+                        >
+                    </div>
+
+                    <div class="max-w-[90vw] bg-white px-5 py-4 text-center">
+                        <h3
+                            x-show="galleryTitle"
+                            x-text="galleryTitle"
+                            class="text-base font-bold text-gray-900"
+                        ></h3>
+
+                        <p
+                            x-show="galleryDescription"
+                            x-text="galleryDescription"
+                            class="mt-2 text-sm leading-6 text-gray-600"
+                        ></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
             <section id="testimoni" class="kc-section bg-gradient-to-b from-white via-gray-50 to-white py-20">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
