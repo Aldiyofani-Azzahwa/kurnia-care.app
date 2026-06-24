@@ -16,6 +16,8 @@ use App\Http\Controllers\Admin\PatientController as AdminPatientController;
 use App\Http\Controllers\Admin\DoctorController as AdminDoctorController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
+use App\Http\Controllers\Admin\GalleryController as AdminGalleryController;
 
 
 /*
@@ -124,25 +126,25 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 | ADMIN SCHEDULES / JADWAL PASIEN
 |--------------------------------------------------------------------------
 */
-Route::get('/admin/schedules', [AdminScheduleController::class, 'index'])
-    ->name('admin.schedules.index');
+    Route::get('/admin/schedules', [AdminScheduleController::class, 'index'])
+        ->name('admin.schedules.index');
 
-Route::get('/admin/schedules/{appointment}', [AdminScheduleController::class, 'show'])
-    ->name('admin.schedules.show');
+    Route::get('/admin/schedules/{appointment}', [AdminScheduleController::class, 'show'])
+        ->name('admin.schedules.show');
 
-Route::patch('/admin/schedules/{appointment}/status', [AdminScheduleController::class, 'updateStatus'])
-    ->name('admin.schedules.updateStatus');
+    Route::patch('/admin/schedules/{appointment}/status', [AdminScheduleController::class, 'updateStatus'])
+        ->name('admin.schedules.updateStatus');
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN REPORTS / LAPORAN
-|--------------------------------------------------------------------------
-*/
-Route::get('/admin/reports', [AdminReportController::class, 'index'])
-    ->name('admin.reports.index');
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN REPORTS / LAPORAN
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/admin/reports', [AdminReportController::class, 'index'])
+        ->name('admin.reports.index');
 
-Route::get('/admin/reports/print', [AdminReportController::class, 'print'])
-    ->name('admin.reports.print');
+    Route::get('/admin/reports/print', [AdminReportController::class, 'print'])
+        ->name('admin.reports.print');
 
 
     /*
@@ -184,6 +186,55 @@ Route::get('/admin/reports/print', [AdminReportController::class, 'print'])
 
     Route::delete('/admin/services/{service}', [AdminServiceController::class, 'destroy'])
         ->name('admin.services.destroy');
+
+    /*
+|--------------------------------------------------------------------------
+| ADMIN SERVICES / TESTIMONIAL
+|--------------------------------------------------------------------------
+*/
+
+
+    Route::get('/admin/testimonials', [AdminTestimonialController::class, 'index'])
+        ->name('admin.testimonials.index');
+
+    Route::get('/admin/testimonials/create', [AdminTestimonialController::class, 'create'])
+        ->name('admin.testimonials.create');
+
+    Route::post('/admin/testimonials', [AdminTestimonialController::class, 'store'])
+        ->name('admin.testimonials.store');
+
+    Route::get('/admin/testimonials/{testimonial}/edit', [AdminTestimonialController::class, 'edit'])
+        ->name('admin.testimonials.edit');
+
+    Route::put('/admin/testimonials/{testimonial}', [AdminTestimonialController::class, 'update'])
+        ->name('admin.testimonials.update');
+
+    Route::delete('/admin/testimonials/{testimonial}', [AdminTestimonialController::class, 'destroy'])
+        ->name('admin.testimonials.destroy');
+
+    /*
+   |--------------------------------------------------------------------------
+|   ADMIN SERVICES / DOKUMENTASI
+   |--------------------------------------------------------------------------
+   */
+
+    Route::get('/admin/galleries', [AdminGalleryController::class, 'index'])
+        ->name('admin.galleries.index');
+
+    Route::get('/admin/galleries/create', [AdminGalleryController::class, 'create'])
+        ->name('admin.galleries.create');
+
+    Route::post('/admin/galleries', [AdminGalleryController::class, 'store'])
+        ->name('admin.galleries.store');
+
+    Route::get('/admin/galleries/{gallery}/edit', [AdminGalleryController::class, 'edit'])
+        ->name('admin.galleries.edit');
+
+    Route::put('/admin/galleries/{gallery}', [AdminGalleryController::class, 'update'])
+        ->name('admin.galleries.update');
+
+    Route::delete('/admin/galleries/{gallery}', [AdminGalleryController::class, 'destroy'])
+        ->name('admin.galleries.destroy');
 
 });
 /*

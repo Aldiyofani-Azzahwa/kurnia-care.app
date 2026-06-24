@@ -77,6 +77,16 @@
                  {{ request()->routeIs('admin.services.*') ? 'bg-emerald-600 text-white font-semibold' : 'hover:bg-emerald-600' }}">
                     Layanan
                 </a>
+                <a href="{{ route('admin.galleries.index') }}"
+                    class="block px-4 py-3 rounded-lg transition
+                   {{ request()->routeIs('admin.galleries.*') ? 'bg-emerald-600 text-white font-semibold' : 'hover:bg-emerald-600' }}">
+                    Dokumentasi
+                </a>
+                <a href="{{ route('admin.testimonials.index') }}"
+                    class="block px-4 py-3 rounded-lg transition
+                    {{ request()->routeIs('admin.testimonials.*') ? 'bg-emerald-600 text-white font-semibold' : 'hover:bg-emerald-600' }}">
+                    Testimoni
+                </a>
 
                 <a href="{{ route('admin.schedules.index') }}"
                     @click.prevent="goTo('{{ route('admin.schedules.index') }}')"
