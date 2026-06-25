@@ -143,22 +143,33 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 
     /*
-    |--------------------------------------------------------------------------
-    | ADMIN PAYMENTS
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| ADMIN PAYMENTS / PEMBAYARAN
+|--------------------------------------------------------------------------
+*/
+
     Route::get('/admin/payments', [AdminPaymentController::class, 'index'])
         ->name('admin.payments.index');
 
     Route::get('/admin/payments/{payment}', [AdminPaymentController::class, 'show'])
         ->name('admin.payments.show');
 
+    /*
+    | Route lama tetap dipertahankan agar tombol/view lama tidak error.
+    | Method verify di controller akan diarahkan ke accept().
+    */
     Route::post('/admin/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])
         ->name('admin.payments.verify');
 
+    /*
+    | Route baru yang lebih jelas secara proses bisnis.
+    | Bisa dipakai nanti kalau tombol di view mau diganti dari verify ke accept.
+    */
+    Route::post('/admin/payments/{payment}/accept', [AdminPaymentController::class, 'accept'])
+        ->name('admin.payments.accept');
+
     Route::post('/admin/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])
         ->name('admin.payments.reject');
-
     /*
     |--------------------------------------------------------------------------
     | ADMIN SERVICES / LAYANAN

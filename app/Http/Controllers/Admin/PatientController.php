@@ -169,14 +169,14 @@ class PatientController extends Controller
             'medicine_type' => $validated['medicine_type'],
             'circumcision_package' => 'Paket Standar',
 
-            'status' => 'menunggu',
+            'status' => Appointment::STATUS_MENUNGGU,
         ]);
 
         Payment::create([
             'appointment_id' => $appointment->id,
             'amount' => $service->price,
             'payment_method' => 'Transfer Bank',
-            'status' => 'pending',
+            'status' => Payment::STATUS_PENDING,
         ]);
 
         return redirect()

@@ -15,9 +15,21 @@ return new class extends Migration
 
             $table->id();
 
+            /*
+            |--------------------------------------------------------------------------
+            | RELASI APPOINTMENT
+            |--------------------------------------------------------------------------
+            */
+
             $table->foreignId('appointment_id')
                 ->constrained('appointments')
                 ->cascadeOnDelete();
+
+            /*
+            |--------------------------------------------------------------------------
+            | DATA PEMBAYARAN
+            |--------------------------------------------------------------------------
+            */
 
             $table->decimal('amount', 12, 2)
                 ->default(0);
@@ -28,11 +40,25 @@ return new class extends Migration
             $table->string('proof_image')
                 ->nullable();
 
-            $table->enum('status', [
-                'pending',
-                'diverifikasi',
-                'ditolak'
-            ])->default('pending');
+            /*
+            |--------------------------------------------------------------------------
+            | STATUS PEMBAYARAN
+            |--------------------------------------------------------------------------
+            | Status disimpan sebagai string supaya fleksibel.
+            |
+            | Status yang dipakai:
+            | - pending
+            | - diterima
+            | - ditolak
+            */
+
+            $table->string('status', 30)->default('pending');
+
+            /*
+            |--------------------------------------------------------------------------
+            | VERIFIKASI ADMIN
+            |--------------------------------------------------------------------------
+            */
 
             $table->foreignId('verified_by')
                 ->nullable()
@@ -47,10 +73,15 @@ return new class extends Migration
 
             $table->timestamps();
 
+            /*
+            |--------------------------------------------------------------------------
+            | INDEXING
+            |--------------------------------------------------------------------------
+            */
+
             $table->index('appointment_id');
             $table->index('status');
             $table->index('verified_by');
-
         });
     }
 

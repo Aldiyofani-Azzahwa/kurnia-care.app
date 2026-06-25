@@ -5,7 +5,9 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Appointment;
+use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PaymentController extends Controller
@@ -25,19 +27,30 @@ class PaymentController extends Controller
                 ->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
-        if ($appointment->status === 'batal') {
+        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'batal') {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pendaftaran sudah dibatalkan, pembayaran tidak bisa diupload.');
         }
 
-        if ($appointment->payment->proof_image) {
+        if ($appointment->status === Appointment::STATUS_SELESAI) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
-                ->with('error', 'Bukti pembayaran sudah dikirim dan tidak bisa diupload ulang.');
+                ->with('error', 'Pendaftaran sudah selesai, pembayaran tidak bisa diubah.');
         }
 
-        if ($appointment->payment->status !== 'pending') {
+        if ($appointment->payment->status === Payment::STATUS_DITERIMA) {
+            return redirect()
+                ->route('user.appointments.show', $appointment)
+                ->with('error', 'Pembayaran sudah diterima dan tidak bisa diubah.');
+        }
+
+        if (
+            !in_array($appointment->payment->status, [
+                Payment::STATUS_PENDING,
+                Payment::STATUS_DITOLAK,
+            ], true)
+        ) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pembayaran ini sudah diproses dan tidak bisa diubah.');
@@ -49,7 +62,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Menyimpan bukti pembayaran.
+     * Menyimpan atau mengganti bukti pembayaran.
      */
     public function update(
         StorePaymentRequest $request,
@@ -63,32 +76,51 @@ class PaymentController extends Controller
             return back()->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
-        if ($appointment->status === 'batal') {
+        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'batal') {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pendaftaran sudah dibatalkan, pembayaran tidak bisa diupload.');
         }
 
-        if ($appointment->payment->proof_image) {
+        if ($appointment->status === Appointment::STATUS_SELESAI) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
-                ->with('error', 'Bukti pembayaran sudah dikirim dan tidak bisa diupload ulang.');
+                ->with('error', 'Pendaftaran sudah selesai, pembayaran tidak bisa diubah.');
         }
 
-        if ($appointment->payment->status !== 'pending') {
+        if ($appointment->payment->status === Payment::STATUS_DITERIMA) {
+            return redirect()
+                ->route('user.appointments.show', $appointment)
+                ->with('error', 'Pembayaran sudah diterima dan tidak bisa diubah.');
+        }
+
+        if (
+            !in_array($appointment->payment->status, [
+                Payment::STATUS_PENDING,
+                Payment::STATUS_DITOLAK,
+            ], true)
+        ) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pembayaran ini sudah diproses dan tidak bisa diubah.');
+        }
+
+        if ($appointment->payment->proof_image && Storage::disk('public')->exists($appointment->payment->proof_image)) {
+            Storage::disk('public')->delete($appointment->payment->proof_image);
         }
 
         $proofPath = $request->file('proof_image')->store('payments', 'public');
 
         $appointment->payment->update([
             'proof_image' => $proofPath,
-            'status' => 'pending',
+            'status' => Payment::STATUS_PENDING,
             'rejection_reason' => null,
             'verified_by' => null,
             'verified_at' => null,
+        ]);
+
+        $appointment->update([
+            'status' => Appointment::STATUS_MENUNGGU,
         ]);
 
         return redirect()

@@ -15,6 +15,12 @@ return new class extends Migration
 
             $table->id();
 
+            /*
+            |--------------------------------------------------------------------------
+            | RELASI
+            |--------------------------------------------------------------------------
+            */
+
             // Relasi pasien
             $table->foreignId('patient_id')
                 ->constrained('patients')
@@ -36,6 +42,12 @@ return new class extends Migration
                 ->constrained('schedules')
                 ->nullOnDelete();
 
+            /*
+            |--------------------------------------------------------------------------
+            | DATA BOOKING
+            |--------------------------------------------------------------------------
+            */
+
             // Tanggal booking
             $table->date('appointment_date');
 
@@ -49,23 +61,30 @@ return new class extends Migration
             $table->enum('medicine_type', [
                 'puyer',
                 'tablet',
-                'syrup'
+                'syrup',
             ]);
 
             // Paket khitan
             $table->string('circumcision_package');
 
-            // Status tindakan
-            $table->enum('status', [
-                'menunggu',
-                'diproses',
-                'selesai',
-                'batal'
-            ])->default('menunggu');
+            /*
+            |--------------------------------------------------------------------------
+            | STATUS APPOINTMENT
+            |--------------------------------------------------------------------------
+            | Status disimpan sebagai string supaya fleksibel dan tidak error
+            | saat ada penyesuaian status baru.
+            |
+            | Status yang dipakai:
+            | - menunggu
+            | - dikonfirmasi
+            | - selesai
+            | - dibatalkan
+            */
+
+            $table->string('status', 30)->default('menunggu');
 
             // Catatan admin
-            $table->text('admin_note')
-                ->nullable();
+            $table->text('admin_note')->nullable();
 
             $table->timestamps();
 
@@ -75,14 +94,10 @@ return new class extends Migration
             |--------------------------------------------------------------------------
             */
 
-            $table->index('patient_id');
-            $table->index('doctor_id');
-            $table->index('service_id');
-            $table->index('schedule_id');
-
             $table->index('appointment_date');
             $table->index('status');
-
+            $table->index(['doctor_id', 'appointment_date', 'appointment_time'], 'appointments_doctor_date_time_index');
+            $table->index(['patient_id', 'appointment_date'], 'appointments_patient_date_index');
         });
     }
 

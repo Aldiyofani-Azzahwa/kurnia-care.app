@@ -4,6 +4,65 @@
 
 @section('content')
 
+    @php
+        $appointment = $payment->appointment;
+        $patient = $appointment?->patient;
+        $service = $appointment?->service;
+        $doctor = $appointment?->doctor;
+
+        $isPending = $payment->status === \App\Models\Payment::STATUS_PENDING;
+        $isAccepted = $payment->status === \App\Models\Payment::STATUS_DITERIMA;
+        $isRejected = $payment->status === \App\Models\Payment::STATUS_DITOLAK;
+
+        $isAppointmentCompleted = $appointment?->status === \App\Models\Appointment::STATUS_SELESAI;
+        $isAppointmentCancelled = $appointment?->status === \App\Models\Appointment::STATUS_DIBATALKAN;
+
+        $paymentStatusLabel = match ($payment->status) {
+            \App\Models\Payment::STATUS_PENDING => 'Pending',
+            \App\Models\Payment::STATUS_DITERIMA => 'Diterima',
+            \App\Models\Payment::STATUS_DITOLAK => 'Ditolak',
+            default => ucfirst($payment->status ?? '-'),
+        };
+
+        $paymentBorderClass = match ($payment->status) {
+            \App\Models\Payment::STATUS_DITERIMA => 'border-emerald-500',
+            \App\Models\Payment::STATUS_DITOLAK => 'border-red-500',
+            \App\Models\Payment::STATUS_PENDING => 'border-amber-400',
+            default => 'border-gray-400',
+        };
+
+        $paymentTextClass = match ($payment->status) {
+            \App\Models\Payment::STATUS_DITERIMA => 'text-emerald-700',
+            \App\Models\Payment::STATUS_DITOLAK => 'text-red-600',
+            \App\Models\Payment::STATUS_PENDING => 'text-amber-600',
+            default => 'text-gray-600',
+        };
+
+        $appointmentStatusLabel = match ($appointment?->status) {
+            \App\Models\Appointment::STATUS_MENUNGGU => 'Menunggu',
+            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'Dikonfirmasi',
+            \App\Models\Appointment::STATUS_SELESAI => 'Selesai',
+            \App\Models\Appointment::STATUS_DIBATALKAN => 'Dibatalkan',
+            default => $appointment?->status ? ucfirst($appointment->status) : '-',
+        };
+
+        $appointmentBorderClass = match ($appointment?->status) {
+            \App\Models\Appointment::STATUS_MENUNGGU => 'border-amber-400',
+            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'border-blue-500',
+            \App\Models\Appointment::STATUS_SELESAI => 'border-emerald-500',
+            \App\Models\Appointment::STATUS_DIBATALKAN => 'border-red-500',
+            default => 'border-gray-400',
+        };
+
+        $appointmentTextClass = match ($appointment?->status) {
+            \App\Models\Appointment::STATUS_MENUNGGU => 'text-amber-600',
+            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'text-blue-600',
+            \App\Models\Appointment::STATUS_SELESAI => 'text-emerald-700',
+            \App\Models\Appointment::STATUS_DIBATALKAN => 'text-red-600',
+            default => 'text-gray-600',
+        };
+    @endphp
+
     @if (session('success'))
         <div class="mb-6 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-700 px-4 py-3">
             {{ session('success') }}
@@ -53,47 +112,28 @@
         {{-- STATUS --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-            <div
-                class="bg-white rounded-xl shadow-sm p-5 border-l-4 
-                    {{ $payment->status === 'ditolak' ? 'border-red-500' : ($payment->status === 'diverifikasi' ? 'border-emerald-500' : 'border-amber-400') }}">
+            <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 {{ $paymentBorderClass }}">
                 <p class="text-sm text-gray-500">Status Pembayaran</p>
 
-                @if ($payment->status === 'pending')
-                    <p class="mt-2 font-bold text-amber-600">Pending</p>
-                @elseif ($payment->status === 'diverifikasi')
-                    <p class="mt-2 font-bold text-emerald-700">Diverifikasi</p>
-                @else
-                    <p class="mt-2 font-bold text-red-600">Ditolak</p>
-                @endif
+                <p class="mt-2 font-bold {{ $paymentTextClass }}">
+                    {{ $paymentStatusLabel }}
+                </p>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-400">
                 <p class="text-sm text-gray-500">Nominal</p>
+
                 <p class="mt-2 font-bold text-emerald-700">
                     Rp{{ number_format($payment->amount, 0, ',', '.') }}
                 </p>
             </div>
 
-            <div
-                class="bg-white rounded-xl shadow-sm p-5 border-l-4 
-                    {{ $payment->appointment && $payment->appointment->status === 'batal' ? 'border-red-500' : 'border-emerald-500' }}">
+            <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 {{ $appointmentBorderClass }}">
                 <p class="text-sm text-gray-500">Status Pendaftaran</p>
 
-                @if ($payment->appointment)
-                    @if ($payment->appointment->status === 'batal')
-                        <p class="mt-2 font-bold text-red-600">Batal</p>
-                    @elseif ($payment->appointment->status === 'diproses')
-                        <p class="mt-2 font-bold text-blue-600">Diproses</p>
-                    @elseif ($payment->appointment->status === 'selesai')
-                        <p class="mt-2 font-bold text-emerald-700">Selesai</p>
-                    @else
-                        <p class="mt-2 font-bold text-amber-600">
-                            {{ ucfirst($payment->appointment->status) }}
-                        </p>
-                    @endif
-                @else
-                    <p class="mt-2 font-bold text-gray-600">-</p>
-                @endif
+                <p class="mt-2 font-bold {{ $appointmentTextClass }}">
+                    {{ $appointmentStatusLabel }}
+                </p>
             </div>
 
         </div>
@@ -101,6 +141,7 @@
         {{-- DATA PASIEN DAN APPOINTMENT --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+            {{-- DATA PASIEN --}}
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-semibold text-emerald-700 mb-4">
                     Data Pasien
@@ -110,54 +151,55 @@
                     <div>
                         <p class="text-gray-500">Nama Anak</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->child_name ?? '-' }}
+                            {{ $patient->child_name ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Umur</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->child_age ?? '-' }} tahun
+                            {{ $patient->child_age ?? '-' }} tahun
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Berat Badan</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->child_weight ?? '-' }} kg
+                            {{ $patient->child_weight ?? '-' }} kg
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Nama Ayah</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->father_name ?? '-' }}
+                            {{ $patient->father_name ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Nama Ibu</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->mother_name ?? '-' }}
+                            {{ $patient->mother_name ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">No HP / WA</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->phone ?? '-' }}
+                            {{ $patient->phone ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Alamat</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->patient->address ?? '-' }}
+                            {{ $patient->address ?? '-' }}
                         </p>
                     </div>
                 </div>
             </div>
 
+            {{-- DATA KHITAN --}}
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-semibold text-emerald-700 mb-4">
                     Data Khitan
@@ -167,22 +209,22 @@
                     <div>
                         <p class="text-gray-500">Layanan</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->service->name ?? '-' }}
+                            {{ $service->name ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Dokter</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->doctor->name ?? '-' }}
+                            {{ $doctor->name ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Tanggal Khitan</p>
                         <p class="font-semibold">
-                            @if ($payment->appointment && $payment->appointment->appointment_date)
-                                {{ $payment->appointment->appointment_date->format('d-m-Y') }}
+                            @if ($appointment && $appointment->appointment_date)
+                                {{ $appointment->appointment_date->format('d-m-Y') }}
                             @else
                                 -
                             @endif
@@ -192,28 +234,28 @@
                     <div>
                         <p class="text-gray-500">Hari</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->appointment_day ?? '-' }}
+                            {{ $appointment->appointment_day ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Jam</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->appointment_time ?? '-' }}
+                            {{ $appointment->appointment_time ?? '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Jenis Obat</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment && $payment->appointment->medicine_type ? ucfirst($payment->appointment->medicine_type) : '-' }}
+                            {{ $appointment && $appointment->medicine_type ? ucfirst($appointment->medicine_type) : '-' }}
                         </p>
                     </div>
 
                     <div>
                         <p class="text-gray-500">Paket Khitan</p>
                         <p class="font-semibold">
-                            {{ $payment->appointment->circumcision_package ?? '-' }}
+                            {{ $appointment->circumcision_package ?? '-' }}
                         </p>
                     </div>
                 </div>
@@ -236,14 +278,17 @@
                         </p>
 
                         <a href="{{ asset('storage/' . $payment->proof_image) }}" target="_blank">
-                            <img src="{{ asset('storage/' . $payment->proof_image) }}" alt="Bukti Pembayaran"
+                            <img src="{{ asset('storage/' . $payment->proof_image) }}"
+                                alt="Bukti Pembayaran"
                                 class="w-full max-h-[500px] object-contain rounded-xl border border-gray-300 bg-gray-50">
                         </a>
                     </div>
 
                     <div class="space-y-4">
+
                         <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
                             <p class="text-sm text-gray-500">Metode Pembayaran</p>
+
                             <p class="font-semibold">
                                 {{ $payment->payment_method ?? 'Transfer Bank' }}
                             </p>
@@ -251,6 +296,7 @@
 
                         <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                             <p class="text-sm text-gray-500">Nominal yang Harus Dibayar</p>
+
                             <p class="font-bold text-lg text-emerald-700">
                                 Rp{{ number_format($payment->amount, 0, ',', '.') }}
                             </p>
@@ -258,13 +304,15 @@
 
                         <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
                             <p class="text-sm text-gray-500">Waktu Upload / Update</p>
+
                             <p class="font-semibold">
                                 {{ $payment->updated_at ? $payment->updated_at->format('d-m-Y H:i') : '-' }}
                             </p>
                         </div>
 
                         <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
-                            <p class="text-sm text-gray-500">Diverifikasi Oleh</p>
+                            <p class="text-sm text-gray-500">Ditangani Oleh</p>
+
                             <p class="font-semibold">
                                 {{ $payment->verifier->name ?? '-' }}
                             </p>
@@ -275,6 +323,7 @@
                                 </p>
                             @endif
                         </div>
+
                     </div>
 
                 </div>
@@ -288,7 +337,7 @@
         </div>
 
         {{-- ALASAN PENOLAKAN --}}
-        @if ($payment->status === 'ditolak' && $payment->rejection_reason)
+        @if ($isRejected && $payment->rejection_reason)
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-semibold text-red-600 mb-3">
                     Alasan Penolakan
@@ -306,70 +355,82 @@
                 Aksi Admin
             </h3>
 
-            @if ($payment->status === 'diverifikasi')
+            @if ($isAccepted)
                 <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
                     <p class="text-emerald-700 font-medium">
-                        Pembayaran ini sudah diverifikasi.
+                        Pembayaran ini sudah diterima.
                     </p>
 
                     @if ($payment->verified_at)
                         <p class="text-sm text-gray-500 mt-1">
-                            Diverifikasi pada {{ $payment->verified_at->format('d-m-Y H:i') }}
+                            Diterima pada {{ $payment->verified_at->format('d-m-Y H:i') }}
                         </p>
                     @endif
                 </div>
 
-            @elseif ($payment->status === 'ditolak')
+            @elseif ($isRejected)
                 <div class="rounded-lg bg-red-50 border border-red-200 p-4">
                     <p class="text-red-700 font-medium">
-                        Pembayaran ini sudah ditolak dan tidak bisa diverifikasi ulang.
+                        Pembayaran ini ditolak.
                     </p>
 
-                    @if ($payment->appointment && $payment->appointment->status === 'batal')
-                        <p class="text-sm text-gray-500 mt-1">
-                            Transaksi sudah dibatalkan.
-                        </p>
-                    @endif
-                </div>
-
-            @elseif ($payment->appointment && $payment->appointment->status === 'batal')
-                <div class="rounded-lg bg-red-50 border border-red-200 p-4">
-                    <p class="text-red-700 font-medium">
-                        Transaksi sudah batal dan tidak bisa diverifikasi.
+                    <p class="text-sm text-gray-500 mt-1">
+                        Pasien masih dapat mengunggah ulang bukti pembayaran melalui dashboard pasien.
                     </p>
                 </div>
 
-            @elseif (!$payment->proof_image)
+            @elseif ($isAppointmentCancelled)
+                <div class="rounded-lg bg-red-50 border border-red-200 p-4">
+                    <p class="text-red-700 font-medium">
+                        Appointment sudah dibatalkan dan pembayaran tidak bisa diubah.
+                    </p>
+                </div>
+
+            @elseif ($isAppointmentCompleted)
+                <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+                    <p class="text-emerald-700 font-medium">
+                        Appointment sudah selesai dan pembayaran tidak bisa diubah.
+                    </p>
+                </div>
+
+            @elseif (! $payment->proof_image)
                 <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                     <p class="text-amber-700 font-medium">
                         Bukti pembayaran belum diupload oleh pasien.
                     </p>
 
                     <p class="text-sm text-gray-500 mt-1">
-                        Admin baru bisa memverifikasi setelah pasien mengupload bukti pembayaran.
+                        Admin baru bisa menerima atau menolak pembayaran setelah pasien mengupload bukti pembayaran.
+                    </p>
+                </div>
+
+            @elseif (! $isPending)
+                <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
+                    <p class="text-gray-700 font-medium">
+                        Status pembayaran tidak dapat diubah.
                     </p>
                 </div>
 
             @else
-
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    {{-- VERIFIKASI --}}
+                    {{-- TERIMA --}}
                     <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
                         <h4 class="font-semibold text-emerald-700 mb-2">
-                            Verifikasi Pembayaran
+                            Terima Pembayaran
                         </h4>
 
                         <p class="text-sm text-gray-600 mb-4">
-                            Klik tombol verifikasi jika bukti transfer sudah sesuai.
+                            Klik tombol terima jika bukti transfer sudah sesuai.
                         </p>
 
-                        <form method="POST" action="{{ route('admin.payments.verify', $payment) }}">
+                        <form method="POST" action="{{ route('admin.payments.accept', $payment) }}">
                             @csrf
 
-                            <button type="submit" onclick="return confirm('Yakin ingin memverifikasi pembayaran ini?')"
+                            <button type="submit"
+                                onclick="return confirm('Yakin ingin menerima pembayaran ini? Appointment akan dikonfirmasi.')"
                                 class="w-full px-5 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
-                                Verifikasi Pembayaran
+                                Terima Pembayaran
                             </button>
                         </form>
                     </div>
@@ -387,12 +448,22 @@
                         <form method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-3">
                             @csrf
 
-                            <textarea name="rejection_reason" rows="3"
+                            <textarea
+                                name="rejection_reason"
+                                rows="3"
+                                required
                                 placeholder="Contoh: Nominal tidak sesuai / bukti tidak jelas"
-                                class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none">{{ old('rejection_reason') }}</textarea>
+                                class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
+                            >{{ old('rejection_reason') }}</textarea>
+
+                            @error('rejection_reason')
+                                <p class="text-sm text-red-600">
+                                    {{ $message }}
+                                </p>
+                            @enderror
 
                             <button type="submit"
-                                onclick="return confirm('Yakin ingin menolak pembayaran ini? Transaksi akan dibatalkan.')"
+                                onclick="return confirm('Yakin ingin menolak pembayaran ini? Pasien masih dapat upload ulang bukti pembayaran.')"
                                 class="w-full px-5 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700">
                                 Tolak Pembayaran
                             </button>
@@ -400,7 +471,6 @@
                     </div>
 
                 </div>
-
             @endif
         </div>
 
