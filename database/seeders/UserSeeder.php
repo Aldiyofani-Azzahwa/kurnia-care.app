@@ -51,7 +51,7 @@ class UserSeeder extends Seeder
             'name' => 'Pasien Demo',
             'email' => 'pasien@kurniacare.com',
             'password' => Hash::make('password'),
-            'role' => 'user',
+            'role' => 'pasien',
             'phone' => '081555666777',
         ]);
     }

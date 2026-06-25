@@ -4,9 +4,13 @@
     $loginUrl = Route::has('login') ? route('login') : url('/login');
     $registerUrl = Route::has('register') ? route('register') : url('/register');
 
-    $bookingUrl = auth()->check()
-        ? (auth()->user()->role === 'user' ? route('user.appointments.create') : route('dashboard'))
-        : $registerUrl;
+   $bookingUrl = auth()->check()
+    ? (
+        in_array(auth()->user()->role, ['pasien', 'user'], true) && Route::has('user.appointments.create')
+            ? route('user.appointments.create')
+            : route('dashboard')
+    )
+    : $registerUrl;
 
     $navItems = [
         ['label' => 'Beranda', 'target' => '#beranda'],

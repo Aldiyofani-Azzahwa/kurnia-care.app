@@ -55,20 +55,15 @@ Route::get('/regions/villages/{districtCode}', [RegionController::class, 'villag
 */
 
 Route::get('/dashboard', function () {
+    $role = auth()->user()->role;
 
-    $user = auth()->user();
-
-    if ($user->role === 'admin') {
-        return redirect('/admin/dashboard');
-    }
-
-    if ($user->role === 'dokter') {
-        return redirect('/doctor/dashboard');
-    }
-
-    return redirect('/user/dashboard');
-
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return match ($role) {
+        'admin' => redirect()->route('admin.dashboard'),
+        'dokter' => redirect()->route('doctor.dashboard'),
+        'pasien', 'user' => redirect()->route('user.dashboard'),
+        default => abort(403, 'Role akun tidak dikenali.'),
+    };
+})->middleware(['auth'])->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -271,7 +266,7 @@ Route::middleware(['auth', 'role:dokter'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:user'])->group(function () {
+Route::middleware(['auth', 'role:pasien'])->group(function () {
 
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])
         ->name('user.dashboard');

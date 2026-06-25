@@ -11,7 +11,7 @@ class StoreAppointmentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->role === 'user';
+        return auth()->check() && auth()->user()->role === 'pasien';
     }
 
     /**
