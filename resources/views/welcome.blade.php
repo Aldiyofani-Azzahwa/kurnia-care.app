@@ -242,128 +242,130 @@
         </header>
 
         <main class="relative z-10">
-            {{-- HERO KONTAK DAN MAPS --}}
-            <section id="beranda" class="bg-gradient-to-b from-emerald-50 to-white pt-8 pb-16">
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {{-- BERANDA / HERO UTAMA --}}
+            <section id="beranda"
+                class="kc-section kc-hero-bg relative isolate overflow-hidden pt-28 sm:pt-32 lg:pt-36">
+                <div class="pointer-events-none absolute inset-0 -z-10">
+                    <div class="kc-hero-pattern absolute inset-0 opacity-40"></div>
 
-                    <div
-                        class="overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#001f1b] via-[#00382f] to-[#101827] shadow-2xl">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                    <div class="absolute -left-24 top-20 h-80 w-80 rounded-full bg-emerald-300/30 blur-3xl"></div>
+                    <div class="absolute -right-24 top-24 h-96 w-96 rounded-full bg-amber-300/25 blur-3xl"></div>
+                    <div class="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl"></div>
 
-                            {{-- KONTAK KLINIK --}}
-                            <div class="p-8 sm:p-10 lg:p-12 text-white">
-                                <div class="flex items-center gap-4">
-                                    <img src="{{ asset('images/logo-kurnia-care.png') }}" alt="Kurnia Care"
-                                        class="h-16 w-16 rounded-full bg-white p-1 shadow-lg">
+                    <div class="absolute left-8 top-32 h-24 w-24 rounded-full border border-amber-300/50"></div>
+                    <div class="absolute right-16 top-44 h-16 w-16 rounded-full border border-emerald-300/50"></div>
+                    <div class="absolute left-10 top-1/2 h-2 w-28 rounded-full bg-amber-300/70"></div>
+                    <div class="absolute right-20 bottom-36 h-2 w-24 rounded-full bg-emerald-300/70"></div>
+                </div>
 
-                                    <div>
-                                        <p class="text-sm font-semibold text-emerald-300">
-                                            Informasi Klinik
-                                        </p>
-                                        <h1 class="mt-1 text-3xl sm:text-4xl font-extrabold leading-tight">
-                                            Kurnia Care
-                                        </h1>
-                                        <p class="mt-1 text-sm text-gray-300">
-                                            Klinik Khitan Modern
-                                        </p>
-                                    </div>
-                                </div>
+                <div
+                    class="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 sm:px-6 lg:grid-cols-2 lg:px-8 lg:pb-28">
+                    <div class="reveal">
+                        <div
+                            class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/85 px-4 py-2 text-sm font-semibold text-emerald-800 shadow-sm backdrop-blur">
+                            <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                            Pendaftaran khitan modern lebih mudah
+                        </div>
 
-                                <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <h1
+                            class="mt-7 max-w-3xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+                            Khitan Aman, Nyaman dan Profesional
+                        </h1>
 
-                                    <div class="rounded-2xl border border-white/10 bg-white/10 p-5">
-                                        <p class="text-sm text-gray-300">
-                                            Alamat
-                                        </p>
-                                        <p class="mt-2 font-semibold text-white">
-                                            {{ $clinicAddress }}
-                                        </p>
-                                    </div>
+                        <div class="kc-gold-line mt-6 h-1 w-28 rounded-full"></div>
 
-                                    <div class="rounded-2xl border border-white/10 bg-white/10 p-5">
-                                        <p class="text-sm text-gray-300">
-                                            WhatsApp
-                                        </p>
-                                        <p class="mt-2 font-semibold text-white">
-                                            {{ $whatsappNumber }}
-                                        </p>
-                                    </div>
+                        <p class="mt-6 max-w-2xl text-base leading-8 text-gray-600 sm:text-lg">
+                            Pendaftaran online yang mudah dengan pelayanan profesional dan pendekatan yang ramah
+                            terhadap anak dan keluarga.
+                        </p>
 
-                                    <div class="rounded-2xl border border-white/10 bg-white/10 p-5">
-                                        <p class="text-sm text-gray-300">
-                                            Email
-                                        </p>
-                                        <p class="mt-2 font-semibold text-white">
-                                            {{ $clinicEmail }}
-                                        </p>
-                                    </div>
+                        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                            <a href="{{ $bookingUrl }}"
+                                class="inline-flex items-center justify-center rounded-2xl bg-emerald-700 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-lg">
+                                Daftar Sekarang
+                            </a>
 
-                                    <div class="rounded-2xl border border-white/10 bg-white/10 p-5">
-                                        <p class="text-sm text-gray-300">
-                                            Jam Operasional
-                                        </p>
-                                        <p class="mt-2 font-semibold text-white">
-                                            {{ $operationalHours }}
-                                        </p>
-                                    </div>
+                            <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener"
+                                class="inline-flex items-center justify-center rounded-2xl border border-amber-200 bg-white px-6 py-3.5 text-sm font-bold text-gray-800 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:text-emerald-700 hover:shadow-md">
+                                Konsultasi
+                            </a>
+                        </div>
 
-                                </div>
-
-                                <div class="mt-8 flex flex-col sm:flex-row gap-3">
-                                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener"
-                                        class="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-600">
-                                        Hubungi WhatsApp
-                                    </a>
-
-                                    @if (!empty($googleMapsDirectionUrl ?? null))
-                                        <a href="{{ $googleMapsDirectionUrl }}" target="_blank" rel="noopener"
-                                            class="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-bold text-gray-900 hover:bg-gray-100">
-                                            Buka Google Maps
-                                        </a>
-                                    @endif
-                                </div>
+                        <div class="mt-8 grid max-w-xl grid-cols-2 gap-4 sm:grid-cols-3">
+                            <div class="kc-premium-card rounded-2xl p-4">
+                                <p class="text-2xl font-bold text-emerald-700">10</p>
+                                <p class="mt-1 text-xs font-medium text-gray-500">Kuota harian</p>
                             </div>
 
-                            {{-- GOOGLE MAPS --}}
-                            <div class="p-6 sm:p-8 lg:p-10">
-                                <div class="h-full rounded-[1.5rem] border border-white/10 bg-white/10 p-4 shadow-xl">
-
-                                    <div class="mb-4">
-                                        <p class="text-sm font-semibold text-emerald-300">
-                                            Lokasi Klinik
-                                        </p>
-                                        <h2 class="mt-1 text-2xl font-bold text-white">
-                                            Temukan Kami di Google Maps
-                                        </h2>
-                                        <p class="mt-2 text-sm text-gray-300">
-                                            Gunakan peta berikut untuk melihat lokasi klinik secara lebih akurat.
-                                        </p>
-                                    </div>
-
-                                    @if (!empty($googleMapsEmbedUrl ?? null))
-                                        <div class="overflow-hidden rounded-2xl bg-white">
-                                            <iframe src="{{ $googleMapsEmbedUrl }}" width="100%" height="360"
-                                                style="border:0;" allowfullscreen loading="lazy"
-                                                referrerpolicy="strict-origin-when-cross-origin">
-                                            </iframe>
-                                        </div>
-                                    @else
-                                        <div class="rounded-2xl border border-yellow-300/30 bg-yellow-400/10 p-5">
-                                            <p class="text-sm font-semibold text-yellow-200">
-                                                Peta belum dikonfigurasi.
-                                            </p>
-                                        </div>
-                                    @endif
-
-                                </div>
+                            <div class="kc-premium-card rounded-2xl p-4">
+                                <p class="text-2xl font-bold text-amber-600">Online</p>
+                                <p class="mt-1 text-xs font-medium text-gray-500">Pendaftaran</p>
                             </div>
 
+                            <div class="kc-premium-card col-span-2 rounded-2xl p-4 sm:col-span-1">
+                                <p class="text-2xl font-bold text-emerald-700">Aman</p>
+                                <p class="mt-1 text-xs font-medium text-gray-500">Ramah keluarga</p>
+                            </div>
                         </div>
                     </div>
 
+                    <div class="reveal">
+                        <div class="kc-hero-panel kc-gold-glow mx-auto max-w-lg rounded-[2rem] p-5">
+                            <div
+                                class="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-emerald-900 via-emerald-700 to-amber-500 p-6 text-white">
+                                <div
+                                    class="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-white/10 blur-2xl">
+                                </div>
+                                <div
+                                    class="pointer-events-none absolute bottom-0 left-0 h-28 w-28 rounded-full bg-amber-200/20 blur-2xl">
+                                </div>
+
+                                <div class="relative flex items-center gap-4">
+                                    <img src="{{ $logo }}" alt="Logo Kurnia Care"
+                                        class="h-16 w-16 rounded-full bg-white object-contain p-1 shadow-md">
+
+                                    <div>
+                                        <p class="text-sm text-emerald-50">Kurnia Care</p>
+                                        <p class="text-xl font-bold">Klinik Khitan Modern</p>
+                                    </div>
+                                </div>
+
+                                <div class="relative mt-8 grid grid-cols-2 gap-4">
+                                    <div class="rounded-2xl bg-white/15 p-4 backdrop-blur">
+                                        <p class="text-sm text-emerald-50">Kuota hari ini</p>
+                                        <p class="mt-2 text-3xl font-bold">{{ $remainingQuota }}</p>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-white/15 p-4 backdrop-blur">
+                                        <p class="text-sm text-emerald-50">Booking aktif</p>
+                                        <p class="mt-2 text-3xl font-bold">{{ $todayBookings }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 space-y-3">
+                                @foreach (['Daftar akun', 'Lengkapi data anak', 'Upload bukti pembayaran'] as $index => $item)
+                                    <div
+                                        class="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-sm font-bold text-amber-700">
+                                                {{ $index + 1 }}
+                                            </div>
+
+                                            <p class="text-sm font-semibold text-gray-700">
+                                                {{ $item }}
+                                            </p>
+                                        </div>
+
+                                        <span class="text-emerald-600">✓</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
-
             <section class="bg-gradient-to-b from-white via-emerald-50/40 to-white py-16">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -735,12 +737,12 @@
                             @forelse ($galleries as $index => $gallery)
                                 <button type="button" x-show="showAllGallery || {{ $index < 4 ? 'true' : 'false' }}"
                                     x-transition @if ($index >= 4) x-cloak @endif @click="
-                                                        if (window.innerWidth < 768) {
-                                                            galleryImage = @js(asset('storage/' . $gallery->image));
-                                                            galleryTitle = @js($gallery->title);
-                                                            galleryDescription = @js($gallery->description ?? '');
-                                                        }
-                                                    "
+                                                                if (window.innerWidth < 768) {
+                                                                    galleryImage = @js(asset('storage/' . $gallery->image));
+                                                                    galleryTitle = @js($gallery->title);
+                                                                    galleryDescription = @js($gallery->description ?? '');
+                                                                }
+                                                            "
                                     class="reveal group relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-xl md:pointer-events-none md:cursor-default">
                                     <img src="{{ asset('storage/' . $gallery->image) }}" alt="{{ $gallery->title }}"
                                         class="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105">
@@ -982,7 +984,7 @@
 
                                 {{-- GOOGLE MAPS --}}
                                 <div class="mt-6">
-                                    
+
 
                                     @if (!empty($googleMapsEmbedUrl ?? null))
                                         <div class="overflow-hidden rounded-2xl bg-white shadow-lg">
