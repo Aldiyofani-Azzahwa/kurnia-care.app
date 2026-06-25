@@ -37,7 +37,7 @@ class ReportController extends Controller
             ->count();
 
         $processCount = $summaryAppointments
-            ->where('status', 'diproses')
+            ->where('status', 'dikonfirmasi')
             ->count();
 
         $doneCount = $summaryAppointments
@@ -45,11 +45,11 @@ class ReportController extends Controller
             ->count();
 
         $cancelCount = $summaryAppointments
-            ->where('status', 'batal')
+            ->where('status', 'dibatalkan')
             ->count();
 
         $verifiedPaymentCount = $summaryAppointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diverifikasi')
+            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
             ->count();
 
         $pendingPaymentCount = $summaryAppointments
@@ -61,7 +61,7 @@ class ReportController extends Controller
             ->count();
 
         $totalRevenue = $summaryAppointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diverifikasi')
+            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
             ->sum(fn ($appointment) => optional($appointment->payment)->amount ?? 0);
 
         $serviceRecaps = $summaryAppointments
@@ -71,7 +71,7 @@ class ReportController extends Controller
                     'service_name' => $serviceName,
                     'total' => $items->count(),
                     'revenue' => $items
-                        ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diverifikasi')
+                        ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
                         ->sum(fn ($appointment) => optional($appointment->payment)->amount ?? 0),
                 ];
             })
@@ -118,7 +118,7 @@ class ReportController extends Controller
             ->count();
 
         $processCount = $appointments
-            ->where('status', 'diproses')
+            ->where('status', 'dikonfirmasi')
             ->count();
 
         $doneCount = $appointments
@@ -126,11 +126,11 @@ class ReportController extends Controller
             ->count();
 
         $cancelCount = $appointments
-            ->where('status', 'batal')
+            ->where('status', 'dibatalkan')
             ->count();
 
         $verifiedPaymentCount = $appointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diverifikasi')
+            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
             ->count();
 
         $pendingPaymentCount = $appointments
@@ -142,7 +142,7 @@ class ReportController extends Controller
             ->count();
 
         $totalRevenue = $appointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diverifikasi')
+            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
             ->sum(fn ($appointment) => optional($appointment->payment)->amount ?? 0);
 
         return view('admin.reports.print', compact(

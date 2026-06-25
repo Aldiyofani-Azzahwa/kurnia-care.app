@@ -10,32 +10,38 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $doctor = auth()->user()->doctor;
+        $doctor = auth()->user()?->doctor;
 
-        if (!$doctor) {
+        if (! $doctor) {
             return view('doctor.dashboard', [
                 'todayAppointments' => 0,
                 'processedAppointments' => 0,
                 'completedAppointments' => 0,
+                'doctorMissing' => true,
             ]);
         }
 
         $todayAppointments = Appointment::where('doctor_id', $doctor->id)
             ->whereDate('appointment_date', today())
+            ->whereIn('status', [
+                'dikonfirmasi',
+                'selesai',
+            ])
             ->count();
 
         $processedAppointments = Appointment::where('doctor_id', $doctor->id)
-            ->where('status', 'diproses')
+            ->where('status', 'dikonfirmasi')
             ->count();
 
         $completedAppointments = Appointment::where('doctor_id', $doctor->id)
             ->where('status', 'selesai')
             ->count();
 
-        return view('doctor.dashboard', compact(
-            'todayAppointments',
-            'processedAppointments',
-            'completedAppointments'
-        ));
+        return view('doctor.dashboard', [
+            'todayAppointments' => $todayAppointments,
+            'processedAppointments' => $processedAppointments,
+            'completedAppointments' => $completedAppointments,
+            'doctorMissing' => false,
+        ]);
     }
 }

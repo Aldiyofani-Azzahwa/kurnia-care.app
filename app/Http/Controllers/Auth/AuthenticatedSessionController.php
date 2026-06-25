@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Tampilkan halaman login.
      */
     public function create(): View
     {
@@ -20,7 +20,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Proses login user.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -28,35 +28,54 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = auth()->user();
-        $intendedUrl = redirect()->getIntendedUrl();
+        $user = $request->user();
+        $role = $this->normalizeRole($user->role);
+
+        $intendedUrl = $request->session()->get('url.intended');
         $path = $intendedUrl ? parse_url($intendedUrl, PHP_URL_PATH) : null;
 
-        if ($user->role === 'admin') {
+        if ($role === 'admin') {
             if ($path && str_starts_with($path, '/admin')) {
-                return redirect()->intended('/admin/dashboard');
+                return redirect()->intended(route('admin.dashboard'));
             }
+
             $request->session()->forget('url.intended');
+
             return redirect()->route('admin.dashboard');
         }
 
-        if ($user->role === 'dokter') {
+        if ($role === 'dokter') {
             if ($path && str_starts_with($path, '/doctor')) {
-                return redirect()->intended('/doctor/dashboard');
+                return redirect()->intended(route('doctor.dashboard'));
             }
+
             $request->session()->forget('url.intended');
+
             return redirect()->route('doctor.dashboard');
         }
 
-        if ($path && str_starts_with($path, '/user')) {
-            return redirect()->intended('/user/dashboard');
+        if ($role === 'pasien') {
+            if ($path && str_starts_with($path, '/user')) {
+                return redirect()->intended(route('user.dashboard'));
+            }
+
+            $request->session()->forget('url.intended');
+
+            return redirect()->route('user.dashboard');
         }
-        $request->session()->forget('url.intended');
-        return redirect()->route('user.dashboard');
+
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->with('error', 'Role akun tidak dikenali. Silakan hubungi admin.');
     }
 
     /**
-     * Destroy an authenticated session.
+     * Proses logout user.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -67,5 +86,18 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    /**
+     * Samakan role lama dan role baru.
+     */
+    private function normalizeRole(?string $role): ?string
+    {
+        return match ($role) {
+            'admin' => 'admin',
+            'dokter', 'doctor' => 'dokter',
+            'pasien', 'user' => 'pasien',
+            default => $role,
+        };
     }
 }

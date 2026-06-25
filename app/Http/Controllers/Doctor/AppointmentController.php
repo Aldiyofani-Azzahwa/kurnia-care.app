@@ -13,8 +13,7 @@ class AppointmentController extends Controller
      */
     public function index(): View
     {
-        $doctor = auth()->user()->doctor;
-        $doctorId = $doctor ? $doctor->id : 0;
+        $doctorId = $this->currentDoctorId();
 
         $appointments = Appointment::with([
             'patient',
@@ -23,8 +22,9 @@ class AppointmentController extends Controller
             'payment',
         ])
             ->where('doctor_id', $doctorId)
-            ->where('status', 'diproses')
-            ->latest('appointment_date')
+            ->where('status', 'dikonfirmasi')
+            ->orderByDesc('appointment_date')
+            ->orderByDesc('appointment_time')
             ->paginate(10);
 
         return view('doctor.appointments.index', [
@@ -37,10 +37,13 @@ class AppointmentController extends Controller
      */
     public function show(Appointment $appointment): View
     {
-        $doctor = auth()->user()->doctor;
-        $doctorId = $doctor ? $doctor->id : 0;
+        $doctorId = $this->currentDoctorId();
 
-        abort_if(!$appointment->doctor_id || $appointment->doctor_id !== $doctorId, 403, 'Anda tidak memiliki akses ke data pasien ini.');
+        abort_if(
+            ! $appointment->doctor_id || (int) $appointment->doctor_id !== $doctorId,
+            403,
+            'Anda tidak memiliki akses ke data pasien ini.'
+        );
 
         $appointment->load([
             'patient',
@@ -60,8 +63,7 @@ class AppointmentController extends Controller
      */
     public function history(): View
     {
-        $doctor = auth()->user()->doctor;
-        $doctorId = $doctor ? $doctor->id : 0;
+        $doctorId = $this->currentDoctorId();
 
         $appointments = Appointment::with([
             'patient',
@@ -72,7 +74,7 @@ class AppointmentController extends Controller
         ])
             ->where('doctor_id', $doctorId)
             ->where('status', 'selesai')
-            ->latest('updated_at')
+            ->orderByDesc('updated_at')
             ->paginate(10);
 
         return view('doctor.appointments.history', [
@@ -85,22 +87,38 @@ class AppointmentController extends Controller
      */
     public function medicalNotes(): View
     {
-        $doctor = auth()->user()->doctor;
-        $doctorId = $doctor ? $doctor->id : 0;
+        $doctorId = $this->currentDoctorId();
 
         $appointments = Appointment::with([
             'patient',
             'doctor',
             'service',
+            'payment',
             'medicalNotes',
         ])
             ->where('doctor_id', $doctorId)
             ->whereHas('medicalNotes')
-            ->latest('updated_at')
+            ->orderByDesc('updated_at')
             ->paginate(10);
 
         return view('doctor.appointments.medical-notes', [
             'appointments' => $appointments,
         ]);
+    }
+
+    /**
+     * Ambil ID dokter dari user login.
+     */
+    private function currentDoctorId(): int
+    {
+        $doctor = auth()->user()?->doctor;
+
+        abort_if(
+            ! $doctor,
+            403,
+            'Akun dokter belum terhubung dengan data dokter.'
+        );
+
+        return (int) $doctor->id;
     }
 }

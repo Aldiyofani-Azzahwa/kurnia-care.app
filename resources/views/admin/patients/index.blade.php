@@ -56,6 +56,7 @@
                 <h3 class="text-lg font-semibold text-emerald-700">
                     Data Pasien
                 </h3>
+
                 <p class="text-sm text-gray-500">
                     Kelola data pasien online dan pasien offline Kurnia Care.
                 </p>
@@ -93,6 +94,7 @@
                     @php
                         $latestAppointment = $patient->appointments->sortByDesc('created_at')->first();
                         $paymentStatus = $latestAppointment?->payment?->status;
+                        $isCompleted = $latestAppointment && $latestAppointment->status === \App\Models\Appointment::STATUS_SELESAI;
                     @endphp
 
                     <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50 p-4 shadow-sm">
@@ -111,15 +113,15 @@
 
                             @if ($latestAppointment)
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                @if ($latestAppointment->status === 'selesai')
-                                                    bg-green-100 text-green-700
-                                                @elseif ($latestAppointment->status === 'diproses')
-                                                    bg-blue-100 text-blue-700
-                                                @elseif ($latestAppointment->status === 'batal')
-                                                    bg-red-100 text-red-700
-                                                @else
-                                                    bg-amber-100 text-amber-700
-                                                @endif">
+                                                    @if ($latestAppointment->status === \App\Models\Appointment::STATUS_SELESAI)
+                                                        bg-green-100 text-green-700
+                                                    @elseif ($latestAppointment->status === \App\Models\Appointment::STATUS_DIKONFIRMASI)
+                                                        bg-blue-100 text-blue-700
+                                                    @elseif ($latestAppointment->status === \App\Models\Appointment::STATUS_DIBATALKAN)
+                                                        bg-red-100 text-red-700
+                                                    @else
+                                                        bg-amber-100 text-amber-700
+                                                    @endif">
                                     {{ ucfirst($latestAppointment->status) }}
                                 </span>
                             @else
@@ -183,15 +185,15 @@
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500">Pembayaran</p>
                                     <p class="text-sm font-semibold mt-1
-                                                @if ($paymentStatus === 'diverifikasi')
-                                                    text-green-600
-                                                @elseif ($paymentStatus === 'ditolak')
-                                                    text-red-600
-                                                @elseif ($paymentStatus === 'pending')
-                                                    text-amber-600
-                                                @else
-                                                    text-gray-500
-                                                @endif">
+                                                    @if ($paymentStatus === \App\Models\Payment::STATUS_DITERIMA)
+                                                        text-green-600
+                                                    @elseif ($paymentStatus === \App\Models\Payment::STATUS_DITOLAK)
+                                                        text-red-600
+                                                    @elseif ($paymentStatus === \App\Models\Payment::STATUS_PENDING)
+                                                        text-amber-600
+                                                    @else
+                                                        text-gray-500
+                                                    @endif">
                                         {{ $paymentStatus ? ucfirst($paymentStatus) : '-' }}
                                     </p>
                                 </div>
@@ -205,27 +207,33 @@
                         </div>
 
                         {{-- AKSI --}}
-                        <div class="mt-4 grid grid-cols-3 gap-2">
+                        <div class="mt-4 grid {{ $isCompleted ? 'grid-cols-2' : 'grid-cols-3' }} gap-2">
                             <a href="{{ route('admin.patients.show', $patient) }}"
                                 class="py-2 text-center bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">
                                 Detail
                             </a>
 
-                            <a href="{{ route('admin.patients.edit', $patient) }}"
-                                class="py-2 text-center bg-amber-400 text-gray-900 rounded-xl text-sm font-medium hover:bg-amber-500">
-                                Edit
-                            </a>
+                            @if (!$isCompleted)
+                                <a href="{{ route('admin.patients.edit', $patient) }}"
+                                    class="py-2 text-center bg-amber-400 text-gray-900 rounded-xl text-sm font-medium hover:bg-amber-500">
+                                    Edit
+                                </a>
 
-                            <form action="{{ route('admin.patients.destroy', $patient) }}" method="POST"
-                                onsubmit="return confirm('Yakin ingin menghapus pasien ini?')">
-                                @csrf
-                                @method('DELETE')
+                                <form action="{{ route('admin.patients.destroy', $patient) }}" method="POST"
+                                    onsubmit="return confirm('Yakin ingin menghapus pasien ini?')">
+                                    @csrf
+                                    @method('DELETE')
 
-                                <button type="submit"
-                                    class="w-full py-2 text-center bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700">
-                                    Hapus
-                                </button>
-                            </form>
+                                    <button type="submit"
+                                        class="w-full py-2 text-center bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700">
+                                        Hapus
+                                    </button>
+                                </form>
+                            @else
+                                <span class="py-2 text-center bg-gray-100 text-gray-500 rounded-xl text-sm font-medium">
+                                    Data terkunci
+                                </span>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -252,6 +260,7 @@
                             @php
                                 $latestAppointment = $patient->appointments->sortByDesc('created_at')->first();
                                 $paymentStatus = $latestAppointment?->payment?->status;
+                                $isCompleted = $latestAppointment && $latestAppointment->status === \App\Models\Appointment::STATUS_SELESAI;
                             @endphp
 
                             <tr class="border-b hover:bg-gray-50">
@@ -275,6 +284,7 @@
                                 <td class="px-4 py-3">
                                     <p>Ayah: {{ $patient->father_name }}</p>
                                     <p>Ibu: {{ $patient->mother_name }}</p>
+
                                     <p class="text-xs text-gray-500 mt-1">
                                         {{ $patient->phone }}
                                     </p>
@@ -282,6 +292,7 @@
 
                                 <td class="px-4 py-3">
                                     <p>{{ $patient->village_name ?? '-' }}</p>
+
                                     <p class="text-xs text-gray-500">
                                         {{ $patient->district_name ?? '-' }},
                                         {{ $patient->city_name ?? '-' }},
@@ -292,15 +303,15 @@
                                 <td class="px-4 py-3">
                                     @if ($latestAppointment)
                                         <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                        @if ($latestAppointment->status === 'selesai')
-                                                            bg-green-100 text-green-700
-                                                        @elseif ($latestAppointment->status === 'diproses')
-                                                            bg-blue-100 text-blue-700
-                                                        @elseif ($latestAppointment->status === 'batal')
-                                                            bg-red-100 text-red-700
-                                                        @else
-                                                            bg-amber-100 text-amber-700
-                                                        @endif">
+                                                            @if ($latestAppointment->status === \App\Models\Appointment::STATUS_SELESAI)
+                                                                bg-green-100 text-green-700
+                                                            @elseif ($latestAppointment->status === \App\Models\Appointment::STATUS_DIKONFIRMASI)
+                                                                bg-blue-100 text-blue-700
+                                                            @elseif ($latestAppointment->status === \App\Models\Appointment::STATUS_DIBATALKAN)
+                                                                bg-red-100 text-red-700
+                                                            @else
+                                                                bg-amber-100 text-amber-700
+                                                            @endif">
                                             {{ ucfirst($latestAppointment->status) }}
                                         </span>
 
@@ -315,13 +326,13 @@
                                 <td class="px-4 py-3">
                                     @if ($paymentStatus)
                                         <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                        @if ($paymentStatus === 'diverifikasi')
-                                                            bg-green-100 text-green-700
-                                                        @elseif ($paymentStatus === 'ditolak')
-                                                            bg-red-100 text-red-700
-                                                        @else
-                                                            bg-amber-100 text-amber-700
-                                                        @endif">
+                                                            @if ($paymentStatus === \App\Models\Payment::STATUS_DITERIMA)
+                                                                bg-green-100 text-green-700
+                                                            @elseif ($paymentStatus === \App\Models\Payment::STATUS_DITOLAK)
+                                                                bg-red-100 text-red-700
+                                                            @else
+                                                                bg-amber-100 text-amber-700
+                                                            @endif">
                                             {{ ucfirst($paymentStatus) }}
                                         </span>
                                     @else
@@ -336,21 +347,27 @@
                                             Detail
                                         </a>
 
-                                        <a href="{{ route('admin.patients.edit', $patient) }}"
-                                            class="px-4 py-2 bg-amber-400 text-gray-900 rounded-lg hover:bg-amber-500">
-                                            Edit
-                                        </a>
+                                        @if (!$isCompleted)
+                                            <a href="{{ route('admin.patients.edit', $patient) }}"
+                                                class="px-4 py-2 bg-amber-400 text-gray-900 rounded-lg hover:bg-amber-500">
+                                                Edit
+                                            </a>
 
-                                        <form action="{{ route('admin.patients.destroy', $patient) }}" method="POST"
-                                            onsubmit="return confirm('Yakin ingin menghapus pasien ini?')">
-                                            @csrf
-                                            @method('DELETE')
+                                            <form action="{{ route('admin.patients.destroy', $patient) }}" method="POST"
+                                                onsubmit="return confirm('Yakin ingin menghapus pasien ini?')">
+                                                @csrf
+                                                @method('DELETE')
 
-                                            <button type="submit"
-                                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                                <button type="submit"
+                                                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm">
+                                                Data terkunci
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

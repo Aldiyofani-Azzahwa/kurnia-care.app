@@ -34,5 +34,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+   'clinic_map' => [
+    'query' => env('KURNIA_CARE_MAP_QUERY', 'Kurnia Care Klinik Khitan Modern Jombang Jawa Timur'),
+    'lat' => env('KURNIA_CARE_MAP_LAT'),
+    'lng' => env('KURNIA_CARE_MAP_LNG'),
+],
 
 ];

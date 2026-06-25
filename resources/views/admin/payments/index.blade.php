@@ -41,7 +41,7 @@
                     class="w-full h-12 rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm">
                     <option value="">Semua Status</option>
                     <option value="pending" @selected($status === 'pending')>Pending</option>
-                    <option value="diverifikasi" @selected($status === 'diverifikasi')>Diverifikasi</option>
+                    <option value="diterima" @selected($status === 'diterima')>Diterima</option>
                     <option value="ditolak" @selected($status === 'ditolak')>Ditolak</option>
                 </select>
 
@@ -84,9 +84,9 @@
                                     <span class="px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                         Pending
                                     </span>
-                                @elseif ($payment->status === 'diverifikasi')
+                                @elseif ($payment->status === 'diterima')
                                     <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
-                                        Diverifikasi
+                                        Diterima
                                     </span>
                                 @else
                                     <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
@@ -138,7 +138,7 @@
                                 </span>
                             </div>
 
-                            @if ($payment->appointment && $payment->appointment->status === 'batal')
+                            @if ($payment->appointment && $payment->appointment->status === 'dibatalkan')
                                 <div class="rounded-lg bg-red-50 border border-red-200 p-3">
                                     <p class="text-sm font-semibold text-red-700">
                                         Transaksi Gagal
@@ -222,9 +222,9 @@
                                         <span class="px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                             Pending
                                         </span>
-                                    @elseif ($payment->status === 'diverifikasi')
+                                    @elseif ($payment->status === 'diterima')
                                         <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
-                                            Diverifikasi
+                                            Diterima
                                         </span>
                                     @else
                                         <div class="space-y-1">
@@ -232,7 +232,7 @@
                                                 Ditolak
                                             </span>
 
-                                            @if ($payment->appointment && $payment->appointment->status === 'batal')
+                                            @if ($payment->appointment && $payment->appointment->status === 'dibatalkan')
                                                 <div>
                                                     <span class="px-3 py-1 rounded-full text-xs bg-red-200 text-red-800 font-semibold">
                                                         Transaksi Gagal

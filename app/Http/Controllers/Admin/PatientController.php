@@ -13,7 +13,10 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Throwable;
 
 class PatientController extends Controller
 {
@@ -51,10 +54,10 @@ class PatientController extends Controller
         $todayRegistrations = Appointment::whereDate('created_at', today())
             ->count();
 
-        $pendingAppointments = Appointment::where('status', 'menunggu')
+        $pendingAppointments = Appointment::where('status', Appointment::STATUS_MENUNGGU)
             ->count();
 
-        $completedAppointments = Appointment::where('status', 'selesai')
+        $completedAppointments = Appointment::where('status', Appointment::STATUS_SELESAI)
             ->count();
 
         return view('admin.patients.index', compact(
@@ -86,7 +89,15 @@ class PatientController extends Controller
                 ->with('nearest_date', $quotaService->nearestAvailableDate($validated['appointment_date']));
         }
 
-        $service = Service::findOrFail($validated['service_id']);
+        $service = Service::where('is_active', true)
+            ->where('id', $validated['service_id'])
+            ->first();
+
+        if (!$service) {
+            return back()
+                ->withInput()
+                ->with('error', 'Layanan tidak tersedia atau tidak aktif.');
+        }
 
         $doctor = Doctor::where('is_active', true)->first();
 
@@ -98,90 +109,96 @@ class PatientController extends Controller
 
         $photoPath = null;
 
-        if ($request->hasFile('child_photo')) {
-            $photoPath = $request->file('child_photo')->store('patients', 'public');
+        try {
+            if ($request->hasFile('child_photo')) {
+                $photoPath = $request->file('child_photo')->store('patients', 'public');
+            }
+
+            DB::transaction(function () use ($validated, $service, $doctor, $photoPath) {
+                $fullAddress = $validated['village_name'] . ', ' .
+                    $validated['district_name'] . ', ' .
+                    $validated['city_name'] . ', ' .
+                    $validated['province_name'];
+
+                $patient = Patient::create([
+                    'user_id' => null,
+                    'registered_by_id' => auth()->id(),
+                    'registration_type' => 'offline',
+
+                    'child_name' => $validated['child_name'],
+                    'child_age' => $validated['child_age'],
+                    'child_weight' => $validated['child_weight'],
+
+                    'drug_allergy' => $validated['drug_allergy'] ?? null,
+                    'bleeding_history' => $validated['bleeding_history'] ?? null,
+                    'surgery_history' => $validated['surgery_history'] ?? null,
+                    'disease_history' => $validated['disease_history'] ?? null,
+
+                    'province_code' => $validated['province_code'],
+                    'province_name' => $validated['province_name'],
+
+                    'city_code' => $validated['city_code'],
+                    'city_name' => $validated['city_name'],
+
+                    'district_code' => $validated['district_code'],
+                    'district_name' => $validated['district_name'],
+
+                    'village_code' => $validated['village_code'],
+                    'village_name' => $validated['village_name'],
+
+                    'address' => $fullAddress,
+
+                    'father_name' => $validated['father_name'],
+                    'mother_name' => $validated['mother_name'],
+                    'phone' => $validated['phone'],
+
+                    'instagram' => $validated['instagram'] ?? null,
+                    'facebook' => $validated['facebook'] ?? null,
+                    'information_source' => $validated['information_source'] ?? null,
+
+                    'child_photo' => $photoPath,
+                ]);
+
+                $appointment = Appointment::create([
+                    'patient_id' => $patient->id,
+                    'doctor_id' => $doctor->id,
+                    'service_id' => $service->id,
+                    'schedule_id' => null,
+
+                    'appointment_date' => $validated['appointment_date'],
+                    'appointment_day' => Carbon::parse($validated['appointment_date'])
+                        ->locale('id')
+                        ->isoFormat('dddd'),
+                    'appointment_time' => $validated['appointment_time'],
+
+                    'medicine_type' => $validated['medicine_type'],
+                    'circumcision_package' => 'Paket Standar',
+
+                    'status' => Appointment::STATUS_MENUNGGU,
+                ]);
+
+                Payment::create([
+                    'appointment_id' => $appointment->id,
+                    'amount' => $service->price,
+                    'payment_method' => 'Transfer Bank',
+                    'status' => Payment::STATUS_PENDING,
+                ]);
+            });
+
+            return redirect()
+                ->route('admin.patients.index')
+                ->with('success', 'Pasien offline berhasil didaftarkan oleh admin.');
+        } catch (Throwable $e) {
+            if ($photoPath && Storage::disk('public')->exists($photoPath)) {
+                Storage::disk('public')->delete($photoPath);
+            }
+
+            report($e);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Data pasien gagal disimpan. Silakan coba lagi.');
         }
-
-        $fullAddress = $validated['village_name'] . ', ' .
-            $validated['district_name'] . ', ' .
-            $validated['city_name'] . ', ' .
-            $validated['province_name'];
-
-        /*
-        |--------------------------------------------------------------------------
-        | SIMPAN PASIEN OFFLINE
-        |--------------------------------------------------------------------------
-        | Pasien offline tidak punya akun login.
-        | Maka user_id dibuat null.
-        | Admin yang sedang login dicatat di registered_by_id.
-        */
-        $patient = Patient::create([
-            'user_id' => null,
-            'registered_by_id' => auth()->id(),
-            'registration_type' => 'offline',
-
-            'child_name' => $validated['child_name'],
-            'child_age' => $validated['child_age'],
-            'child_weight' => $validated['child_weight'],
-
-            'drug_allergy' => $validated['drug_allergy'] ?? null,
-            'bleeding_history' => $validated['bleeding_history'] ?? null,
-            'surgery_history' => $validated['surgery_history'] ?? null,
-            'disease_history' => $validated['disease_history'] ?? null,
-
-            'province_code' => $validated['province_code'],
-            'province_name' => $validated['province_name'],
-
-            'city_code' => $validated['city_code'],
-            'city_name' => $validated['city_name'],
-
-            'district_code' => $validated['district_code'],
-            'district_name' => $validated['district_name'],
-
-            'village_code' => $validated['village_code'],
-            'village_name' => $validated['village_name'],
-
-            'address' => $fullAddress,
-
-            'father_name' => $validated['father_name'],
-            'mother_name' => $validated['mother_name'],
-            'phone' => $validated['phone'],
-
-            'instagram' => $validated['instagram'] ?? null,
-            'facebook' => $validated['facebook'] ?? null,
-            'information_source' => $validated['information_source'] ?? null,
-
-            'child_photo' => $photoPath,
-        ]);
-
-        $appointment = Appointment::create([
-            'patient_id' => $patient->id,
-            'doctor_id' => $doctor->id,
-            'service_id' => $validated['service_id'],
-            'schedule_id' => null,
-
-            'appointment_date' => $validated['appointment_date'],
-            'appointment_day' => Carbon::parse($validated['appointment_date'])
-                ->locale('id')
-                ->isoFormat('dddd'),
-            'appointment_time' => $validated['appointment_time'],
-
-            'medicine_type' => $validated['medicine_type'],
-            'circumcision_package' => 'Paket Standar',
-
-            'status' => Appointment::STATUS_MENUNGGU,
-        ]);
-
-        Payment::create([
-            'appointment_id' => $appointment->id,
-            'amount' => $service->price,
-            'payment_method' => 'Transfer Bank',
-            'status' => Payment::STATUS_PENDING,
-        ]);
-
-        return redirect()
-            ->route('admin.patients.index')
-            ->with('success', 'Pasien offline berhasil didaftarkan oleh admin.');
     }
 
     public function show(Patient $patient): View
@@ -197,13 +214,25 @@ class PatientController extends Controller
         return view('admin.patients.show', compact('patient'));
     }
 
-    public function edit(Patient $patient): View
+    public function edit(Patient $patient): View|RedirectResponse
     {
+        if ($this->hasCompletedAppointment($patient)) {
+            return redirect()
+                ->route('admin.patients.show', $patient)
+                ->with('error', 'Data pasien sudah selesai tindakan dan tidak bisa diedit.');
+        }
+
         return view('admin.patients.edit', compact('patient'));
     }
 
     public function update(Request $request, Patient $patient): RedirectResponse
     {
+        if ($this->hasCompletedAppointment($patient)) {
+            return redirect()
+                ->route('admin.patients.show', $patient)
+                ->with('error', 'Data pasien sudah selesai tindakan dan tidak bisa diubah.');
+        }
+
         $validated = $request->validate($this->updateRules(), $this->messages());
 
         $fullAddress = $validated['village_name'] . ', ' .
@@ -251,12 +280,33 @@ class PatientController extends Controller
 
     public function destroy(Patient $patient): RedirectResponse
     {
-        if ($patient->appointments()->exists()) {
-            return back()
-                ->with('error', 'Pasien tidak dapat dihapus karena sudah memiliki data pendaftaran.');
+        if ($this->hasCompletedAppointment($patient)) {
+            return redirect()
+                ->route('admin.patients.index')
+                ->with('error', 'Data pasien sudah selesai tindakan dan tidak bisa dihapus.');
         }
 
-        $patient->delete();
+        DB::transaction(function () use ($patient) {
+            $patient->load([
+                'appointments.payment',
+                'appointments.medicalNotes',
+            ]);
+
+            foreach ($patient->appointments as $appointment) {
+                if ($appointment->payment) {
+                    $appointment->payment->delete();
+                }
+
+                $appointment->medicalNotes()->delete();
+                $appointment->delete();
+            }
+
+            if ($patient->child_photo && Storage::disk('public')->exists($patient->child_photo)) {
+                Storage::disk('public')->delete($patient->child_photo);
+            }
+
+            $patient->delete();
+        });
 
         return redirect()
             ->route('admin.patients.index')
@@ -277,6 +327,13 @@ class PatientController extends Controller
             'remaining_quota' => $quotaService->remainingQuota($date),
             'nearest_available_date' => $quotaService->nearestAvailableDate($date),
         ]);
+    }
+
+    private function hasCompletedAppointment(Patient $patient): bool
+    {
+        return $patient->appointments()
+            ->where('status', Appointment::STATUS_SELESAI)
+            ->exists();
     }
 
     private function storeRules(): array

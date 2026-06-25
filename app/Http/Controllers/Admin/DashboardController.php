@@ -25,19 +25,19 @@ class DashboardController extends Controller
         $waitingAppointments = Appointment::where('status', 'menunggu')
             ->count();
 
-        $processedAppointments = Appointment::where('status', 'diproses')
+        $processedAppointments = Appointment::where('status', 'dikonfirmasi')
             ->count();
 
         $completedAppointments = Appointment::where('status', 'selesai')
             ->count();
 
-        $cancelledAppointments = Appointment::where('status', 'batal')
+        $cancelledAppointments = Appointment::where('status', 'dibatalkan')
             ->count();
 
         $pendingPayments = Payment::where('status', 'pending')
             ->count();
 
-        $verifiedPayments = Payment::where('status', 'diverifikasi')
+        $verifiedPayments = Payment::where('status', 'diterima')
             ->count();
 
         $rejectedPayments = Payment::where('status', 'ditolak')

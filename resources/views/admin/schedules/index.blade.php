@@ -33,7 +33,7 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-blue-500">
-        <p class="text-xs text-gray-500">Diproses</p>
+        <p class="text-xs text-gray-500">dikonfirmasi</p>
         <h3 class="text-3xl font-bold text-blue-600 mt-2">
             {{ $processCount }}
         </h3>
@@ -86,9 +86,9 @@
                 class="w-full h-12 rounded-xl border border-gray-300 px-4 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
             <option value="">Semua Status</option>
             <option value="menunggu" @selected($status === 'menunggu')>Menunggu</option>
-            <option value="diproses" @selected($status === 'diproses')>Diproses</option>
+            <option value="dikonfirmasi" @selected($status === 'dikonfirmasi')>Dikonfirmasi</option>
             <option value="selesai" @selected($status === 'selesai')>Selesai</option>
-            <option value="batal" @selected($status === 'batal')>Batal</option>
+            <option value="dibatalkan" @selected($status === 'dibatalkan')>Dibatalkan</option>
         </select>
 
         <div class="flex gap-2">
@@ -125,9 +125,9 @@
                         <span class="px-3 py-1 rounded-full text-xs font-semibold
                             @if ($appointment->status === 'selesai')
                                 bg-green-100 text-green-700
-                            @elseif ($appointment->status === 'diproses')
+                            @elseif ($appointment->status === 'dikonfirmasi')
                                 bg-blue-100 text-blue-700
-                            @elseif ($appointment->status === 'batal')
+                            @elseif ($appointment->status === 'dibatalkan')
                                 bg-red-100 text-red-700
                             @else
                                 bg-amber-100 text-amber-700
@@ -181,9 +181,9 @@
                                     onchange="this.form.submit()"
                                     class="w-full py-2 px-2 bg-white border border-emerald-200 text-emerald-700 rounded-xl text-sm font-medium">
                                 <option value="menunggu" @selected($appointment->status === 'menunggu')>Menunggu</option>
-                                <option value="diproses" @selected($appointment->status === 'diproses')>Diproses</option>
+                                <option value="dikonfirmasi" @selected($appointment->status === 'dikonfirmasi')>Dikonfirmasi</option>
                                 <option value="selesai" @selected($appointment->status === 'selesai')>Selesai</option>
-                                <option value="batal" @selected($appointment->status === 'batal')>Batal</option>
+                                <option value="dibatalkan" @selected($appointment->status === 'dibatalkan')>Dibatalkan</option>
                             </select>
                         </form>
                     </div>
@@ -235,7 +235,7 @@
 
                             <td class="px-4 py-3">
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                    @if (($appointment->payment->status ?? '') === 'diverifikasi')
+                                    @if (($appointment->payment->status ?? '') === 'diterima')
                                         bg-green-100 text-green-700
                                     @elseif (($appointment->payment->status ?? '') === 'ditolak')
                                         bg-red-100 text-red-700
@@ -256,9 +256,9 @@
                                             onchange="this.form.submit()"
                                             class="h-10 rounded-lg border border-gray-300 px-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
                                         <option value="menunggu" @selected($appointment->status === 'menunggu')>Menunggu</option>
-                                        <option value="diproses" @selected($appointment->status === 'diproses')>Diproses</option>
+                                        <option value="dikonfirmasi" @selected($appointment->status === 'dikonfirmasi')>Dikonfirmasi</option>
                                         <option value="selesai" @selected($appointment->status === 'selesai')>Selesai</option>
-                                        <option value="batal" @selected($appointment->status === 'batal')>Batal</option>
+                                        <option value="dibatalkan" @selected($appointment->status === 'dibatalkan')>Dibatalkan</option>
                                     </select>
                                 </form>
                             </td>

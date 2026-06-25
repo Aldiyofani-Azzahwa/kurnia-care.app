@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -35,7 +35,7 @@ class User extends Authenticatable
 
     /**
      * Relasi lama: satu user punya satu patient.
-     * Sementara tetap disimpan agar kode lama tidak error.
+     * Tetap disimpan agar kode lama tidak error.
      */
     public function patient(): HasOne
     {
@@ -43,18 +43,24 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi baru: satu user bisa punya banyak data pasien/pendaftaran.
+     * Relasi baru: satu user bisa punya banyak data pasien.
      */
     public function patients(): HasMany
     {
         return $this->hasMany(Patient::class);
     }
 
+    /**
+     * Relasi user dokter ke data doctor.
+     */
     public function doctor(): HasOne
     {
         return $this->hasOne(Doctor::class);
     }
 
+    /**
+     * Relasi pembayaran yang diverifikasi user admin.
+     */
     public function verifiedPayments(): HasMany
     {
         return $this->hasMany(Payment::class, 'verified_by');
@@ -67,16 +73,16 @@ class User extends Authenticatable
 
     public function isDoctor(): bool
     {
-        return $this->role === 'dokter';
+        return in_array($this->role, ['dokter', 'doctor'], true);
     }
 
     public function isUser(): bool
     {
-        return $this->role === 'pasien';
+        return in_array($this->role, ['pasien', 'user'], true);
     }
 
     public function isPasien(): bool
     {
-        return $this->role === 'pasien';
+        return $this->isUser();
     }
 }

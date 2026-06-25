@@ -24,7 +24,7 @@
             </h3>
 
             <p class="text-sm text-gray-500">
-                Daftar pasien yang pembayarannya sudah diverifikasi dan siap ditangani.
+                Daftar pasien yang pembayarannya sudah Diterima dan siap ditangani.
             </p>
         </div>
 
@@ -47,9 +47,9 @@
                             </div>
 
                             <div class="shrink-0">
-                                @if ($appointment->status === 'diproses')
+                                @if ($appointment->status === 'dikonfirmasi')
                                     <span class="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                                        Diproses
+                                        Dikonfirmasi
                                     </span>
                                 @elseif ($appointment->status === 'selesai')
                                     <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
@@ -165,9 +165,9 @@
                                 </td>
 
                                 <td class="px-4 py-3">
-                                    @if ($appointment->status === 'diproses')
+                                    @if ($appointment->status === 'dikonfirmasi')
                                         <span class="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                                            Diproses
+                                            dikonfirmasi
                                         </span>
                                     @elseif ($appointment->status === 'selesai')
                                         <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
@@ -204,7 +204,7 @@
                 </p>
 
                 <p class="text-sm text-gray-400">
-                    Jadwal pasien akan muncul setelah pembayaran diverifikasi admin.
+                    Jadwal pasien akan muncul setelah pembayaran Diterima admin.
                 </p>
             </div>
 

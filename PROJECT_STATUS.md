@@ -71,7 +71,7 @@ erDiagram
     *   `appointment_time` (time)
     *   `medicine_type` (enum: `'puyer'`, `'tablet'`, `'syrup'`)
     *   `circumcision_package` (string, default: `'Paket Standar'`)
-    *   `status` (enum: `'menunggu'`, `'diproses'`, `'selesai'`, `'batal'`)
+    *   `status` (enum: `'menunggu'`, `'dikonfirmasi'`, `'selesai'`, `'dibatalkan'`)
     *   `admin_note` (text, nullable)
 6.  **`payments`**
     *   `id` (Primary Key)
@@ -79,7 +79,7 @@ erDiagram
     *   `amount` (decimal)
     *   `payment_method` (string)
     *   `proof_image` (string, nullable)
-    *   `status` (enum: `'pending'`, `'diverifikasi'`, `'ditolak'`)
+    *   `status` (enum: `'pending'`, `'diterima'`, `'ditolak'`)
     *   `verified_by` (foreignId, nullable, references `users.id`)
     *   `verified_at` (timestamp, nullable)
     *   `rejection_reason` (text, nullable)
@@ -146,7 +146,7 @@ erDiagram
 
 ### A. Admin Controllers
 *   **`DashboardController`**:
-    *   `index()`: Menampilkan summary statistik (total pasien, antrean menunggu, diproses, selesai, batal, nominal pembayaran diverifikasi) serta list janji temu & pembayaran terbaru.
+    *   `index()`: Menampilkan summary statistik (total pasien, antrean menunggu, dikonfirmasi, selesai, Dibatalkan, nominal pembayaran Diterima) serta list janji temu & pembayaran terbaru.
 *   **`DoctorController`**:
     *   `index()`: Menampilkan daftar dokter aktif & tidak aktif serta form pencarian.
     *   `create()` & `store()`: Membuat data login dokter (role: `dokter`) serta profil dokternya.
@@ -159,22 +159,22 @@ erDiagram
     *   `checkQuota()`: Cek ketersediaan kuota harian via JSON.
 *   **`PaymentController`**:
     *   `index()` & `show()`: Monitoring transaksi pembayaran transfer bank oleh pasien.
-    *   `verify()`: Verifikasi pembayaran pending (mengubah status pembayaran menjadi `diverifikasi` dan status janji temu menjadi `diproses`).
-    *   `reject()`: Menolak pembayaran pending disertai input alasan penolakan (mengubah status pembayaran menjadi `ditolak` dan janji temu menjadi `batal`).
+    *   `verify()`: Verifikasi pembayaran pending (mengubah status pembayaran menjadi `Diterima` dan status janji temu menjadi `dikonfirmasi`).
+    *   `reject()`: Menolak pembayaran pending disertai input alasan penolakan (mengubah status pembayaran menjadi `ditolak` dan janji temu menjadi `Dibatalkan`).
 *   **`ReportController`**:
     *   `index()`: Summary pendapatan klinik, rekap per jenis layanan, laporan status antrean per hari, per bulan, atau range kustom.
     *   `print()`: Halaman khusus cetak laporan berformat clean print.
 *   **`ScheduleController`**:
     *   `index()` & `show()`: Manajemen antrean pasien harian klinik sunat.
-    *   `updateStatus()`: Mengubah status pendaftaran pasien (`menunggu`, `diproses`, `selesai`, `batal`).
+    *   `updateStatus()`: Mengubah status pendaftaran pasien (`menunggu`, `dikonfirmasi`, `selesai`, `Dibatalkan`).
 *   **`ServiceController`**:
     *   `index()`, `create()`, `store()`, `edit()`, `update()`, `destroy()`: Pengelolaan paket layanan sunat (harga, nama, deksripsi, status keaktifan).
 
 ### B. Doctor Controllers
 *   **`DashboardController`**:
-    *   `index()`: Statistik tugas dokter yang bersangkutan (antrean diproses, selesai hari ini).
+    *   `index()`: Statistik tugas dokter yang bersangkutan (antrean dikonfirmasi, selesai hari ini).
 *   **`AppointmentController`**:
-    *   `index()`: Menampilkan daftar pasien aktif dokter bersangkutan yang siap ditangani (`status = diproses`).
+    *   `index()`: Menampilkan daftar pasien aktif dokter bersangkutan yang siap ditangani (`status = dikonfirmasi`).
     *   `show()`: Melihat profil detail pasien, riwayat alergi, dan catatan medis sebelumnya.
     *   `history()`: Menampilkan riwayat pasien yang sukses ditangani dokter bersangkutan.
     *   `medicalNotes()`: Rekapitulasi seluruh catatan medis yang pernah diinput dokter.
@@ -253,9 +253,9 @@ erDiagram
 *   [x] Pendaftaran Sunat Offline (oleh Admin).
 *   [x] Pendaftaran Sunat Online (oleh Pasien) terintegrasi dropdown wilayah Laravolt Indonesia secara AJAX.
 *   [x] Konfirmasi & Upload Bukti Pembayaran (oleh Pasien).
-*   [x] Approval / Reject Bukti Bayar disertai Alasan Pembatalan (oleh Admin).
+*   [x] Approval / Reject Bukti Bayar disertai Alasan PemDibatalkanan (oleh Admin).
 *   [x] Monitoring Antrean Harian Pasien per tanggal (oleh Admin).
-*   [x] Manajemen Status Pasien: Menunggu -> Diproses -> Selesai / Batal (oleh Admin).
+*   [x] Manajemen Status Pasien: Menunggu -> dikonfirmasi -> Selesai / Dibatalkan (oleh Admin).
 *   [x] Rekapitulasi Rekam Medis / Catatan Tindakan (oleh Dokter).
 *   [x] Pelaporan Keuangan / Laporan Omzet Harian/Bulanan serta Fitur Cetak (oleh Admin).
 

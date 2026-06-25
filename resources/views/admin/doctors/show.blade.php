@@ -120,9 +120,9 @@
                                     <span class="px-3 py-1 rounded-full text-xs font-semibold
                                         @if ($appointment->status === 'selesai')
                                             bg-green-100 text-green-700
-                                        @elseif ($appointment->status === 'diproses')
+                                        @elseif ($appointment->status === 'dikonfirmasi')
                                             bg-blue-100 text-blue-700
-                                        @elseif ($appointment->status === 'batal')
+                                        @elseif ($appointment->status === 'dibatalkan')
                                             bg-red-100 text-red-700
                                         @else
                                             bg-amber-100 text-amber-700

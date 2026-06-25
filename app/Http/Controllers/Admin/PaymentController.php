@@ -8,6 +8,7 @@ use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PaymentController extends Controller
@@ -66,9 +67,56 @@ class PaymentController extends Controller
     }
 
     /**
+     * Upload bukti pembayaran oleh admin.
+     */
+    public function uploadProof(Request $request, Payment $payment): RedirectResponse
+    {
+        $request->validate([
+            'proof_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'proof_image.required' => 'Bukti pembayaran wajib diupload.',
+            'proof_image.image' => 'File harus berupa gambar.',
+            'proof_image.mimes' => 'Format bukti pembayaran harus JPG, JPEG, PNG, atau WEBP.',
+            'proof_image.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+        ]);
+
+        $payment->load('appointment');
+
+        if (! $payment->appointment) {
+            return back()->with('error', 'Data appointment tidak ditemukan.');
+        }
+
+        if ($payment->appointment->status === Appointment::STATUS_DIBATALKAN) {
+            return back()->with('error', 'Appointment sudah dibatalkan. Bukti pembayaran tidak bisa diupload.');
+        }
+
+        if ($payment->proof_image && Storage::disk('public')->exists($payment->proof_image)) {
+            Storage::disk('public')->delete($payment->proof_image);
+        }
+
+        $proofPath = $request->file('proof_image')->store('payments', 'public');
+
+        $updateData = [
+            'proof_image' => $proofPath,
+        ];
+
+        if ($payment->status === Payment::STATUS_DITOLAK) {
+            $updateData['status'] = Payment::STATUS_PENDING;
+            $updateData['rejection_reason'] = null;
+            $updateData['verified_by'] = null;
+            $updateData['verified_at'] = null;
+        }
+
+        $payment->update($updateData);
+
+        return redirect()
+            ->route('admin.payments.show', $payment)
+            ->with('success', 'Bukti pembayaran berhasil diupload.');
+    }
+
+    /**
      * Verifikasi pembayaran.
-     *
-     * Method verify tetap dipertahankan agar route/view lama tidak error.
+     * Method ini tetap ada agar route lama tidak error.
      */
     public function verify(Payment $payment): RedirectResponse
     {
@@ -77,25 +125,21 @@ class PaymentController extends Controller
 
     /**
      * Terima pembayaran.
-     *
-     * Saat pembayaran diterima:
-     * - payments.status menjadi diterima
-     * - appointments.status menjadi dikonfirmasi
      */
     public function accept(Payment $payment): RedirectResponse
     {
-        $payment->load('appointment');
+        $payment->load('appointment.patient');
 
         if (! $payment->appointment) {
             return back()->with('error', 'Data appointment tidak ditemukan.');
         }
 
         if ($payment->status !== Payment::STATUS_PENDING) {
-            return back()->with('error', 'Pembayaran ini sudah diproses dan tidak bisa diverifikasi ulang.');
+            return back()->with('error', 'Pembayaran ini sudah dikonfirmasi dan tidak bisa diterima ulang.');
         }
 
         if ($payment->appointment->status === Appointment::STATUS_DIBATALKAN) {
-            return back()->with('error', 'Appointment sudah dibatalkan dan tidak bisa diverifikasi.');
+            return back()->with('error', 'Appointment sudah dibatalkan dan tidak bisa diterima.');
         }
 
         if ($payment->appointment->status === Appointment::STATUS_SELESAI) {
@@ -103,7 +147,7 @@ class PaymentController extends Controller
         }
 
         if (! $payment->proof_image) {
-            return back()->with('error', 'Bukti pembayaran belum diupload.');
+            return back()->with('error', 'Bukti pembayaran belum diupload. Silakan upload bukti pembayaran terlebih dahulu.');
         }
 
         DB::transaction(function () use ($payment) {
@@ -126,12 +170,6 @@ class PaymentController extends Controller
 
     /**
      * Tolak pembayaran.
-     *
-     * Saat pembayaran ditolak:
-     * - payments.status menjadi ditolak
-     * - appointments.status kembali menunggu
-     *
-     * Appointment tidak langsung dibatalkan agar pasien masih bisa upload ulang bukti pembayaran.
      */
     public function reject(Request $request, Payment $payment): RedirectResponse
     {
@@ -148,7 +186,7 @@ class PaymentController extends Controller
         }
 
         if ($payment->status !== Payment::STATUS_PENDING) {
-            return back()->with('error', 'Pembayaran ini sudah diproses dan tidak bisa ditolak ulang.');
+            return back()->with('error', 'Pembayaran ini sudah dikonfirmasi dan tidak bisa ditolak ulang.');
         }
 
         if ($payment->appointment->status === Appointment::STATUS_SELESAI) {

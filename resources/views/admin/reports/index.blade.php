@@ -101,9 +101,9 @@
                     class="w-full h-12 rounded-xl border border-gray-300 px-4 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
                 <option value="">Semua</option>
                 <option value="menunggu" @selected($status === 'menunggu')>Menunggu</option>
-                <option value="diproses" @selected($status === 'diproses')>Diproses</option>
+                <option value="dikonfirmasi" @selected($status === 'dikonfirmasi')>Dikonfirmasi</option>
                 <option value="selesai" @selected($status === 'selesai')>Selesai</option>
-                <option value="batal" @selected($status === 'batal')>Batal</option>
+                <option value="dibatalkan" @selected($status === 'dibatalkan')>Dibatalkan</option>
             </select>
         </div>
 
@@ -116,7 +116,7 @@
                     class="w-full h-12 rounded-xl border border-gray-300 px-4 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
                 <option value="">Semua</option>
                 <option value="pending" @selected($paymentStatus === 'pending')>Pending</option>
-                <option value="diverifikasi" @selected($paymentStatus === 'diverifikasi')>Diverifikasi</option>
+                <option value="diterima" @selected($paymentStatus === 'diterima')>Diterima</option>
                 <option value="ditolak" @selected($paymentStatus === 'ditolak')>Ditolak</option>
             </select>
         </div>
@@ -164,7 +164,7 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-blue-500">
-        <p class="text-xs text-gray-500">Diproses</p>
+        <p class="text-xs text-gray-500">dikonfirmasi</p>
         <h3 class="text-3xl font-bold text-blue-600 mt-2">
             {{ $processCount }}
         </h3>
@@ -180,14 +180,14 @@
 
 <div class="mb-6 grid grid-cols-1 lg:grid-cols-4 gap-4">
     <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-red-400">
-        <p class="text-xs text-gray-500">Batal</p>
+        <p class="text-xs text-gray-500">Dibatalkan</p>
         <h3 class="text-3xl font-bold text-red-500 mt-2">
             {{ $cancelCount }}
         </h3>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-green-500">
-        <p class="text-xs text-gray-500">Pembayaran Diverifikasi</p>
+        <p class="text-xs text-gray-500">Pembayaran Diterima</p>
         <h3 class="text-3xl font-bold text-green-600 mt-2">
             {{ $verifiedPaymentCount }}
         </h3>
@@ -267,9 +267,9 @@
                         <span class="px-3 py-1 rounded-full text-xs font-semibold
                             @if ($appointment->status === 'selesai')
                                 bg-green-100 text-green-700
-                            @elseif ($appointment->status === 'diproses')
+                            @elseif ($appointment->status === 'dikonfirmasi')
                                 bg-blue-100 text-blue-700
-                            @elseif ($appointment->status === 'batal')
+                            @elseif ($appointment->status === 'dibatalkan')
                                 bg-red-100 text-red-700
                             @else
                                 bg-amber-100 text-amber-700

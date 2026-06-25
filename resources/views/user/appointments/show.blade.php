@@ -42,17 +42,17 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 
-                {{ $appointment->status === 'batal' ? 'border-red-500' : 'border-emerald-500' }}">
+                {{ $appointment->status === 'dibatalkan' ? 'border-red-500' : 'border-emerald-500' }}">
                 <p class="text-sm text-gray-500">Status Pendaftaran</p>
 
                 @if ($appointment->status === 'menunggu')
                     <p class="mt-2 font-bold text-amber-600">Menunggu</p>
-                @elseif ($appointment->status === 'diproses')
-                    <p class="mt-2 font-bold text-blue-600">Diproses</p>
+                @elseif ($appointment->status === 'dikonfirmasi')
+                    <p class="mt-2 font-bold text-blue-600">Dikonfirmasi</p>
                 @elseif ($appointment->status === 'selesai')
                     <p class="mt-2 font-bold text-emerald-700">Selesai</p>
-                @elseif ($appointment->status === 'batal')
-                    <p class="mt-2 font-bold text-red-600">Batal</p>
+                @elseif ($appointment->status === 'dibatalkan')
+                    <p class="mt-2 font-bold text-red-600">Dibatalkan</p>
                 @else
                     <p class="mt-2 font-bold text-gray-700">{{ ucfirst($appointment->status) }}</p>
                 @endif
@@ -65,8 +65,8 @@
 
                 @if ($appointment->payment && $appointment->payment->status === 'pending')
                     <p class="mt-2 font-bold text-amber-600">Pending</p>
-                @elseif ($appointment->payment && $appointment->payment->status === 'diverifikasi')
-                    <p class="mt-2 font-bold text-emerald-700">Diverifikasi</p>
+                @elseif ($appointment->payment && $appointment->payment->status === 'diterima')
+                    <p class="mt-2 font-bold text-emerald-700">Diterima</p>
                 @elseif ($appointment->payment && $appointment->payment->status === 'ditolak')
                     <p class="mt-2 font-bold text-red-600">Ditolak</p>
                 @else
@@ -264,9 +264,9 @@
                         <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                             Pending
                         </span>
-                    @elseif ($appointment->payment && $appointment->payment->status === 'diverifikasi')
+                    @elseif ($appointment->payment && $appointment->payment->status === 'diterima')
                         <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
-                            Diverifikasi
+                            Diterima
                         </span>
                     @elseif ($appointment->payment && $appointment->payment->status === 'ditolak')
                         <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
@@ -313,7 +313,7 @@
                             Data pembayaran tidak ditemukan.
                         </p>
                     </div>
-                @elseif ($appointment->status === 'batal')
+                @elseif ($appointment->status === 'dibatalkan')
                     <div class="rounded-lg bg-red-50 border border-red-200 p-4">
                         <p class="text-red-700 font-semibold">
                             Pendaftaran sudah dibatalkan. Pembayaran tidak bisa diupload.
@@ -332,7 +332,7 @@
                 @elseif ($appointment->payment->status !== 'pending')
                     <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                         <p class="text-amber-700 font-semibold">
-                            Pembayaran sudah diproses dan tidak bisa diubah.
+                            Pembayaran sudah dikonfirmasi dan tidak bisa diubah.
                         </p>
                     </div>
                 @else

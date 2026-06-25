@@ -26,7 +26,10 @@ class AppointmentQuotaService
     public function countAppointments(string $date): int
     {
         return Appointment::whereDate('appointment_date', $date)
-            ->whereIn('status', ['menunggu', 'diproses'])
+            ->whereIn('status', [
+                Appointment::STATUS_MENUNGGU,
+                Appointment::STATUS_DIKONFIRMASI,
+            ])
             ->count();
     }
 
@@ -52,7 +55,7 @@ class AppointmentQuotaService
         for ($i = 0; $i < 30; $i++) {
             $checkingDate = $date->copy()->addDays($i)->format('Y-m-d');
 
-            if (!$this->isFull($checkingDate)) {
+            if (! $this->isFull($checkingDate)) {
                 return $checkingDate;
             }
         }
@@ -61,7 +64,7 @@ class AppointmentQuotaService
     }
 
     /**
-     * Ambil daftar tanggal tersedia untuk 14 hari ke depan.
+     * Ambil daftar tanggal tersedia untuk beberapa hari ke depan.
      */
     public function availableDates(int $days = 14): array
     {

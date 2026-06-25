@@ -110,9 +110,9 @@
                         onchange="this.form.submit()"
                         class="w-full h-12 rounded-lg border border-gray-300 px-4 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
                     <option value="menunggu" @selected($appointment->status === 'menunggu')>Menunggu</option>
-                    <option value="diproses" @selected($appointment->status === 'diproses')>Diproses</option>
+                    <option value="dikonfirmasi" @selected($appointment->status === 'dikonfirmasi')>Dikonfirmasi</option>
                     <option value="selesai" @selected($appointment->status === 'selesai')>Selesai</option>
-                    <option value="batal" @selected($appointment->status === 'batal')>Batal</option>
+                    <option value="dibatalkan" @selected($appointment->status === 'dibatalkan')>Dibatalkan</option>
                 </select>
             </form>
         </div>
@@ -140,7 +140,7 @@
             <p>
                 <span class="text-gray-500">Status Pembayaran:</span><br>
                 <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold
-                    @if (($appointment->payment->status ?? '') === 'diverifikasi')
+                    @if (($appointment->payment->status ?? '') === 'diterima')
                         bg-green-100 text-green-700
                     @elseif (($appointment->payment->status ?? '') === 'ditolak')
                         bg-red-100 text-red-700

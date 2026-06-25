@@ -30,13 +30,13 @@
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-                <p class="text-sm text-gray-500">Pembayaran Diverifikasi</p>
+                <p class="text-sm text-gray-500">Pembayaran Diterima</p>
                 <h4 class="mt-3 text-3xl font-bold text-emerald-600">{{ $verifiedPayments }}</h4>
-                <p class="mt-2 text-xs text-gray-400">Pembayaran berhasil diverifikasi</p>
+                <p class="mt-2 text-xs text-gray-400">Pembayaran berhasil diterima</p>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-                <p class="text-sm text-gray-500">Transaksi Batal</p>
+                <p class="text-sm text-gray-500">Transaksi Dibatalkan</p>
                 <h4 class="mt-3 text-3xl font-bold text-red-600">{{ $cancelledAppointments }}</h4>
                 <p class="mt-2 text-xs text-gray-400">Appointment yang dibatalkan</p>
             </div>
@@ -81,7 +81,7 @@
             </div>
 
             <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5">
-                <p class="text-sm text-blue-700">Diproses Dokter</p>
+                <p class="text-sm text-blue-700">dikonfirmasi Dokter</p>
                 <h4 class="mt-2 text-2xl font-bold text-blue-700">{{ $processedAppointments }}</h4>
             </div>
 
@@ -130,17 +130,17 @@
                                             <span class="px-3 py-1 text-xs rounded-full bg-amber-100 text-amber-700">
                                                 Menunggu
                                             </span>
-                                        @elseif ($appointment->status === 'diproses')
+                                        @elseif ($appointment->status === 'dikonfirmasi')
                                             <span class="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
-                                                Diproses
+                                                Dikonfirmasi
                                             </span>
                                         @elseif ($appointment->status === 'selesai')
                                             <span class="px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700">
                                                 Selesai
                                             </span>
-                                        @elseif ($appointment->status === 'batal')
+                                        @elseif ($appointment->status === 'dibatalkan')
                                             <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700">
-                                                Batal
+                                                Dibatalkan
                                             </span>
                                         @else
                                             <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
@@ -190,9 +190,9 @@
                                             <span class="px-3 py-1 text-xs rounded-full bg-amber-100 text-amber-700">
                                                 Pending
                                             </span>
-                                        @elseif ($payment->status === 'diverifikasi')
+                                        @elseif ($payment->status === 'diterima')
                                             <span class="px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700">
-                                                Diverifikasi
+                                                Diterima
                                             </span>
                                         @elseif ($payment->status === 'ditolak')
                                             <span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700">
@@ -234,7 +234,7 @@
         new Chart(appointmentCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Menunggu', 'Diproses', 'Selesai', 'Batal'],
+                labels: ['Menunggu', 'dikonfirmasi', 'Selesai', 'dibatalkan'],
                 datasets: [{
                     data: [
                             {{ $waitingAppointments }},
@@ -266,7 +266,7 @@
         new Chart(paymentCtx, {
             type: 'bar',
             data: {
-                labels: ['Pending', 'Perlu Verifikasi', 'Diverifikasi', 'Ditolak'],
+                labels: ['Pending', 'Perlu Verifikasi', 'diterima', 'ditolak'],
                 datasets: [{
                     label: 'Jumlah',
                     data: [

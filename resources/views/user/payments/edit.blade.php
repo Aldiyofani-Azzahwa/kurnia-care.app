@@ -21,7 +21,7 @@
             <strong>Upload gagal.</strong>
 
             <ul class="mt-2 list-disc list-inside text-sm">
-                @foreach ($errors->all() as $error)
+                @foreach ($errors->all() as $error) 
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
@@ -97,9 +97,9 @@
                             <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                 Pending
                             </span>
-                        @elseif ($appointment->payment && $appointment->payment->status === 'diverifikasi')
+                        @elseif ($appointment->payment && $appointment->payment->status === 'diterima')
                             <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
-                                Diverifikasi
+                                Diterima
                             </span>
                         @elseif ($appointment->payment && $appointment->payment->status === 'ditolak')
                             <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
@@ -140,7 +140,7 @@
                         </a>
                     </div>
 
-                @elseif ($appointment->status === 'batal')
+                @elseif ($appointment->status === 'dibatalkan')
 
                     <div class="rounded-lg bg-red-50 border border-red-200 p-4">
                         <p class="text-red-700 font-semibold">
@@ -187,7 +187,7 @@
 
                     <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                         <p class="text-amber-700 font-semibold">
-                            Pembayaran sudah diproses.
+                            Pembayaran sudah dikonfirmasi.
                         </p>
 
                         <p class="text-sm text-gray-600 mt-1">
@@ -225,7 +225,7 @@
                         <div class="flex flex-col md:flex-row gap-3 md:justify-end">
                             <a href="{{ route('user.appointments.show', $appointment) }}"
                                 class="px-5 py-3 text-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                                Batal
+                                Dibatalkan
                             </a>
 
                             <button type="submit"

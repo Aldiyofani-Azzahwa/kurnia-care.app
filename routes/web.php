@@ -1,17 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegionController;
+
 use App\Http\Controllers\User\PaymentController as UserPaymentController;
 use App\Http\Controllers\User\AppointmentController as UserAppointmentController;
+use App\Http\Controllers\User\DashboardController as UserDashboardController;
+
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
-use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointmentController;
-use App\Http\Controllers\Doctor\MedicalNoteController as DoctorMedicalNoteController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
-use App\Http\Controllers\User\DashboardController as UserDashboardController;
 use App\Http\Controllers\Admin\PatientController as AdminPatientController;
 use App\Http\Controllers\Admin\DoctorController as AdminDoctorController;
 use App\Http\Controllers\Admin\ScheduleController as AdminScheduleController;
@@ -19,14 +20,15 @@ use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\GalleryController as AdminGalleryController;
 
+use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointmentController;
+use App\Http\Controllers\Doctor\MedicalNoteController as DoctorMedicalNoteController;
+use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTE
 |--------------------------------------------------------------------------
 */
-
-use App\Http\Controllers\HomeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -59,7 +61,7 @@ Route::get('/dashboard', function () {
 
     return match ($role) {
         'admin' => redirect()->route('admin.dashboard'),
-        'dokter' => redirect()->route('doctor.dashboard'),
+        'dokter', 'doctor' => redirect()->route('doctor.dashboard'),
         'pasien', 'user' => redirect()->route('user.dashboard'),
         default => abort(403, 'Role akun tidak dikenali.'),
     };
@@ -72,7 +74,6 @@ Route::get('/dashboard', function () {
 */
 
 Route::middleware('auth')->group(function () {
-
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
@@ -81,7 +82,6 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
-
 });
 
 /*
@@ -100,27 +100,28 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     | ADMIN PATIENTS / PASIEN
     |--------------------------------------------------------------------------
     */
+
     Route::get('/admin/patients/check-quota', [AdminPatientController::class, 'checkQuota'])
         ->name('admin.patients.checkQuota');
 
     Route::resource('/admin/patients', AdminPatientController::class)
         ->names('admin.patients');
 
-
     /*
-|--------------------------------------------------------------------------
-| ADMIN DOCTORS / DOKTER
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | ADMIN DOCTORS / DOKTER
+    |--------------------------------------------------------------------------
+    */
+
     Route::resource('/admin/doctors', AdminDoctorController::class)
         ->names('admin.doctors');
 
     /*
-/*
-|--------------------------------------------------------------------------
-| ADMIN SCHEDULES / JADWAL PASIEN
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | ADMIN SCHEDULES / JADWAL PASIEN
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/admin/schedules', [AdminScheduleController::class, 'index'])
         ->name('admin.schedules.index');
 
@@ -135,18 +136,18 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     | ADMIN REPORTS / LAPORAN
     |--------------------------------------------------------------------------
     */
+
     Route::get('/admin/reports', [AdminReportController::class, 'index'])
         ->name('admin.reports.index');
 
     Route::get('/admin/reports/print', [AdminReportController::class, 'print'])
         ->name('admin.reports.print');
 
-
     /*
-|--------------------------------------------------------------------------
-| ADMIN PAYMENTS / PEMBAYARAN
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | ADMIN PAYMENTS / PEMBAYARAN
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/admin/payments', [AdminPaymentController::class, 'index'])
         ->name('admin.payments.index');
@@ -154,27 +155,24 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/payments/{payment}', [AdminPaymentController::class, 'show'])
         ->name('admin.payments.show');
 
-    /*
-    | Route lama tetap dipertahankan agar tombol/view lama tidak error.
-    | Method verify di controller akan diarahkan ke accept().
-    */
+    Route::post('/admin/payments/{payment}/upload-proof', [AdminPaymentController::class, 'uploadProof'])
+        ->name('admin.payments.upload-proof');
+
     Route::post('/admin/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])
         ->name('admin.payments.verify');
 
-    /*
-    | Route baru yang lebih jelas secara proses bisnis.
-    | Bisa dipakai nanti kalau tombol di view mau diganti dari verify ke accept.
-    */
     Route::post('/admin/payments/{payment}/accept', [AdminPaymentController::class, 'accept'])
         ->name('admin.payments.accept');
 
     Route::post('/admin/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])
         ->name('admin.payments.reject');
+
     /*
     |--------------------------------------------------------------------------
     | ADMIN SERVICES / LAYANAN
     |--------------------------------------------------------------------------
     */
+
     Route::get('/admin/services', [AdminServiceController::class, 'index'])
         ->name('admin.services.index');
 
@@ -194,11 +192,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('admin.services.destroy');
 
     /*
-|--------------------------------------------------------------------------
-| ADMIN SERVICES / TESTIMONIAL
-|--------------------------------------------------------------------------
-*/
-
+    |--------------------------------------------------------------------------
+    | ADMIN TESTIMONIAL
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/admin/testimonials', [AdminTestimonialController::class, 'index'])
         ->name('admin.testimonials.index');
@@ -219,10 +216,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('admin.testimonials.destroy');
 
     /*
-   |--------------------------------------------------------------------------
-|   ADMIN SERVICES / DOKUMENTASI
-   |--------------------------------------------------------------------------
-   */
+    |--------------------------------------------------------------------------
+    | ADMIN DOKUMENTASI / GALERI
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/admin/galleries', [AdminGalleryController::class, 'index'])
         ->name('admin.galleries.index');
@@ -241,8 +238,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::delete('/admin/galleries/{gallery}', [AdminGalleryController::class, 'destroy'])
         ->name('admin.galleries.destroy');
-
 });
+
 /*
 |--------------------------------------------------------------------------
 | DOCTOR ROUTE
@@ -268,7 +265,6 @@ Route::middleware(['auth', 'role:dokter'])->group(function () {
 
     Route::get('/doctor/medical-notes', [DoctorAppointmentController::class, 'medicalNotes'])
         ->name('doctor.medical-notes.index');
-
 });
 
 /*
@@ -302,7 +298,6 @@ Route::middleware(['auth', 'role:pasien'])->group(function () {
 
     Route::post('/user/appointments/{appointment}/payment', [UserPaymentController::class, 'update'])
         ->name('user.payments.update');
-
 });
 
 /*

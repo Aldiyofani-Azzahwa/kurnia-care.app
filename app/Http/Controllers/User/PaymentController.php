@@ -27,7 +27,7 @@ class PaymentController extends Controller
                 ->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
-        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'batal') {
+        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'dibatalkan') {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pendaftaran sudah dibatalkan, pembayaran tidak bisa diupload.');
@@ -53,7 +53,7 @@ class PaymentController extends Controller
         ) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
-                ->with('error', 'Pembayaran ini sudah diproses dan tidak bisa diubah.');
+                ->with('error', 'Pembayaran ini sudah dikonfirmasi dan tidak bisa diubah.');
         }
 
         return view('user.payments.edit', [
@@ -76,7 +76,7 @@ class PaymentController extends Controller
             return back()->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
-        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'batal') {
+        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'dibatalkan') {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pendaftaran sudah dibatalkan, pembayaran tidak bisa diupload.');
@@ -102,7 +102,7 @@ class PaymentController extends Controller
         ) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
-                ->with('error', 'Pembayaran ini sudah diproses dan tidak bisa diubah.');
+                ->with('error', 'Pembayaran ini sudah dikonfirmasi dan tidak bisa diubah.');
         }
 
         if ($appointment->payment->proof_image && Storage::disk('public')->exists($appointment->payment->proof_image)) {

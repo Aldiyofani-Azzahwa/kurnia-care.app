@@ -131,7 +131,7 @@
     </div>
 
     <div class="card">
-        <span>Diproses</span>
+        <span>dikonfirmasi</span>
         <strong>{{ $processCount }}</strong>
     </div>
 
@@ -141,12 +141,12 @@
     </div>
 
     <div class="card">
-        <span>Batal</span>
+        <span>Dibatalkan</span>
         <strong>{{ $cancelCount }}</strong>
     </div>
 
     <div class="card">
-        <span>Pembayaran Diverifikasi</span>
+        <span>Pembayaran Diterima</span>
         <strong>{{ $verifiedPaymentCount }}</strong>
     </div>
 

@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $activeAppointments = Appointment::whereHas('patient', function ($query) use ($userId) {
             $query->where('user_id', $userId);
         })
-            ->whereIn('status', ['menunggu', 'diproses'])
+            ->whereIn('status', ['menunggu', 'dikonfirmasi'])
             ->count();
 
         $pendingPayments = Appointment::whereHas('patient', function ($query) use ($userId) {

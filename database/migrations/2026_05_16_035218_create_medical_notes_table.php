@@ -31,7 +31,7 @@ return new class extends Migration
             // Status tindakan
             $table->enum('action_status', [
                 'menunggu',
-                'diproses',
+                'dikonfirmasi',
                 'selesai'
             ])->default('menunggu');
 

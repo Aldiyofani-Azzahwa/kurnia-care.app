@@ -15,10 +15,13 @@ class MedicalNoteController extends Controller
      */
     public function store(Request $request, Appointment $appointment): RedirectResponse
     {
-        $doctor = auth()->user()->doctor;
-        $doctorId = $doctor ? $doctor->id : 0;
+        $doctorId = $this->currentDoctorId();
 
-        abort_if(!$appointment->doctor_id || $appointment->doctor_id !== $doctorId, 403, 'Anda tidak memiliki akses ke data pasien ini.');
+        abort_if(
+            ! $appointment->doctor_id || (int) $appointment->doctor_id !== $doctorId,
+            403,
+            'Anda tidak memiliki akses ke data pasien ini.'
+        );
 
         $validated = $request->validate([
             'action_status' => ['required', 'in:berhasil,perlu_kontrol,gagal,lainnya'],
@@ -30,37 +33,19 @@ class MedicalNoteController extends Controller
             'note.max' => 'Catatan tindakan maksimal 5000 karakter.',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | PASTIKAN APPOINTMENT SUDAH DIPROSES
-        |--------------------------------------------------------------------------
-        | Dokter hanya boleh memberi catatan pada appointment yang sudah
-        | diverifikasi pembayarannya oleh admin.
-        */
-        if (!in_array($appointment->status, ['diproses', 'selesai'])) {
+        if (! in_array($appointment->status, ['dikonfirmasi', 'selesai'], true)) {
             return back()
                 ->withInput()
-                ->with('error', 'Catatan tindakan hanya bisa dibuat untuk pasien yang sudah diproses.');
+                ->with('error', 'Catatan tindakan hanya bisa dibuat untuk pasien yang sudah dikonfirmasi.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | SIMPAN CATATAN MEDIS
-        |--------------------------------------------------------------------------
-        */
         MedicalNote::create([
             'appointment_id' => $appointment->id,
-            'doctor_id' => $appointment->doctor_id,
+            'doctor_id' => $doctorId,
             'action_status' => $validated['action_status'],
             'note' => $validated['note'],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE STATUS APPOINTMENT
-        |--------------------------------------------------------------------------
-        | Kalau tindakan berhasil, appointment otomatis selesai.
-        */
         if ($validated['action_status'] === 'berhasil') {
             $appointment->update([
                 'status' => 'selesai',
@@ -70,5 +55,21 @@ class MedicalNoteController extends Controller
         return redirect()
             ->route('doctor.appointments.show', $appointment)
             ->with('success', 'Catatan tindakan berhasil disimpan.');
+    }
+
+    /**
+     * Ambil ID dokter dari user login.
+     */
+    private function currentDoctorId(): int
+    {
+        $doctor = auth()->user()?->doctor;
+
+        abort_if(
+            ! $doctor,
+            403,
+            'Akun dokter belum terhubung dengan data dokter.'
+        );
+
+        return (int) $doctor->id;
     }
 }

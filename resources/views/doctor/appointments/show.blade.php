@@ -201,7 +201,7 @@
             @endif
 
             {{-- FORM CATATAN --}}
-            @if ($appointment->status === 'diproses')
+            @if ($appointment->status === 'dikonfirmasi')
                 <form action="{{ route('doctor.medical-notes.store', $appointment) }}" method="POST" class="space-y-4 mb-6">
                     @csrf
 
@@ -262,7 +262,7 @@
                     </p>
 
                     <p class="text-sm text-gray-600 mt-1">
-                        Catatan tindakan hanya bisa dibuat saat status pendaftaran sudah diproses.
+                        Catatan tindakan hanya bisa dibuat saat status pendaftaran sudah dikonfirmasi.
                     </p>
                 </div>
             @endif

@@ -102,8 +102,6 @@ class Appointment extends Model
     |--------------------------------------------------------------------------
     | MEDICAL NOTE
     |--------------------------------------------------------------------------
-    | Secara bisnis, satu appointment idealnya punya satu catatan tindakan utama.
-    | Method medicalNotes tetap disediakan agar kode lama tidak langsung error.
     */
 
     public function medicalNote(): HasOne

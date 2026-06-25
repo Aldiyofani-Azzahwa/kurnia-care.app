@@ -10,6 +10,12 @@
         $service = $appointment?->service;
         $doctor = $appointment?->doctor;
 
+        $isAdminRegistration = $patient && (
+            $patient->registration_type !== 'online'
+            || !is_null($patient->registered_by_id)
+            || is_null($patient->user_id)
+        );
+
         $isPending = $payment->status === \App\Models\Payment::STATUS_PENDING;
         $isAccepted = $payment->status === \App\Models\Payment::STATUS_DITERIMA;
         $isRejected = $payment->status === \App\Models\Payment::STATUS_DITOLAK;
@@ -19,8 +25,8 @@
 
         $paymentStatusLabel = match ($payment->status) {
             \App\Models\Payment::STATUS_PENDING => 'Pending',
-            \App\Models\Payment::STATUS_DITERIMA => 'Diterima',
-            \App\Models\Payment::STATUS_DITOLAK => 'Ditolak',
+            \App\Models\Payment::STATUS_DITERIMA => 'diterima',
+            \App\Models\Payment::STATUS_DITOLAK => 'ditolak',
             default => ucfirst($payment->status ?? '-'),
         };
 
@@ -40,9 +46,9 @@
 
         $appointmentStatusLabel = match ($appointment?->status) {
             \App\Models\Appointment::STATUS_MENUNGGU => 'Menunggu',
-            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'Dikonfirmasi',
+            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'dikonfirmasi',
             \App\Models\Appointment::STATUS_SELESAI => 'Selesai',
-            \App\Models\Appointment::STATUS_DIBATALKAN => 'Dibatalkan',
+            \App\Models\Appointment::STATUS_DIBATALKAN => 'dibatalkan',
             default => $appointment?->status ? ucfirst($appointment->status) : '-',
         };
 
@@ -278,8 +284,7 @@
                         </p>
 
                         <a href="{{ asset('storage/' . $payment->proof_image) }}" target="_blank">
-                            <img src="{{ asset('storage/' . $payment->proof_image) }}"
-                                alt="Bukti Pembayaran"
+                            <img src="{{ asset('storage/' . $payment->proof_image) }}" alt="Bukti Pembayaran"
                                 class="w-full max-h-[500px] object-contain rounded-xl border border-gray-300 bg-gray-50">
                         </a>
                     </div>
@@ -330,9 +335,36 @@
             @else
                 <div class="rounded-lg bg-red-50 border border-red-200 p-4">
                     <p class="text-red-700 font-medium">
-                        Pasien belum mengupload bukti pembayaran.
+                        Bukti pembayaran belum tersedia.
+                    </p>
+
+                    <p class="text-sm text-gray-500 mt-1">
+                        Admin dapat mengupload bukti pembayaran untuk pendaftaran yang dibuat melalui role admin.
                     </p>
                 </div>
+
+                <form action="{{ route('admin.payments.upload-proof', $payment) }}" method="POST" enctype="multipart/form-data"
+                    class="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-5">
+                    @csrf
+
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Upload Bukti Pembayaran
+                    </label>
+
+                    <input type="file" name="proof_image" accept="image/jpeg,image/png,image/jpg,image/webp" required
+                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+
+                    @error('proof_image')
+                        <p class="mt-2 text-sm text-red-600">
+                            {{ $message }}
+                        </p>
+                    @enderror
+
+                    <button type="submit"
+                        class="mt-4 px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
+                        Upload Bukti Pembayaran
+                    </button>
+                </form>
             @endif
         </div>
 
@@ -393,18 +425,18 @@
                     </p>
                 </div>
 
-            @elseif (! $payment->proof_image)
+            @elseif (!$payment->proof_image)
                 <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                     <p class="text-amber-700 font-medium">
-                        Bukti pembayaran belum diupload oleh pasien.
+                        Bukti pembayaran belum diupload.
                     </p>
 
                     <p class="text-sm text-gray-500 mt-1">
-                        Admin baru bisa menerima atau menolak pembayaran setelah pasien mengupload bukti pembayaran.
+                        Upload bukti pembayaran terlebih dahulu pada bagian Bukti Pembayaran, lalu klik Terima Pembayaran.
                     </p>
                 </div>
 
-            @elseif (! $isPending)
+            @elseif (!$isPending)
                 <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
                     <p class="text-gray-700 font-medium">
                         Status pembayaran tidak dapat diubah.
@@ -448,13 +480,9 @@
                         <form method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-3">
                             @csrf
 
-                            <textarea
-                                name="rejection_reason"
-                                rows="3"
-                                required
+                            <textarea name="rejection_reason" rows="3" required
                                 placeholder="Contoh: Nominal tidak sesuai / bukti tidak jelas"
-                                class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none"
-                            >{{ old('rejection_reason') }}</textarea>
+                                class="w-full rounded-lg border border-gray-400 bg-white px-4 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none">{{ old('rejection_reason') }}</textarea>
 
                             @error('rejection_reason')
                                 <p class="text-sm text-red-600">

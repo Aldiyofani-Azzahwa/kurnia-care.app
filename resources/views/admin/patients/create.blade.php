@@ -636,7 +636,7 @@
         <div class="flex flex-col gap-3 pt-4 md:flex-row md:justify-end">
             <a href="{{ route('admin.patients.index') }}"
                 class="rounded-lg bg-gray-200 px-5 py-3 text-center text-gray-700 hover:bg-gray-300">
-                Batal
+                Dibatalkan
             </a>
 
             <button

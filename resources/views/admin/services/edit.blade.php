@@ -198,7 +198,7 @@
         <div class="flex flex-col md:flex-row gap-3 md:justify-end pt-4">
             <a href="{{ route('admin.services.index') }}"
                 class="px-5 py-3 text-center bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                Batal
+                Dibatalkan
             </a>
 
             <button

@@ -53,7 +53,7 @@ class ScheduleController extends Controller
             ->count();
 
         $processCount = Appointment::whereDate('appointment_date', $selectedDate)
-            ->where('status', 'diproses')
+            ->where('status', 'dikonfirmasi')
             ->count();
 
         $doneCount = Appointment::whereDate('appointment_date', $selectedDate)
@@ -90,7 +90,7 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'status' => [
                 'required',
-                Rule::in(['menunggu', 'diproses', 'selesai', 'batal']),
+                Rule::in(['menunggu', 'dikonfirmasi', 'selesai', 'dibatalkan']),
             ],
         ], [
             'status.required' => 'Status jadwal wajib dipilih.',

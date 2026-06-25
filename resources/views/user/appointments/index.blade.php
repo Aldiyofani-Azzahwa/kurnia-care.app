@@ -59,17 +59,17 @@
                                     <span class="px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                         Menunggu
                                     </span>
-                                @elseif ($appointment->status === 'diproses')
+                                @elseif ($appointment->status === 'dikonfirmasi')
                                     <span class="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                                        Diproses
+                                        Dikonfirmasi
                                     </span>
                                 @elseif ($appointment->status === 'selesai')
                                     <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
                                         Selesai
                                     </span>
-                                @elseif ($appointment->status === 'batal')
+                                @elseif ($appointment->status === 'dibatalkan')
                                     <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                                        Batal
+                                        Dibatalkan
                                     </span>
                                 @else
                                     <span class="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
@@ -113,9 +113,9 @@
                                         <span class="px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                             Pending
                                         </span>
-                                    @elseif ($appointment->payment && $appointment->payment->status === 'diverifikasi')
+                                    @elseif ($appointment->payment && $appointment->payment->status === 'diterima')
                                         <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
-                                            Diverifikasi
+                                            Diterima
                                         </span>
                                     @elseif ($appointment->payment && $appointment->payment->status === 'ditolak')
                                         <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
@@ -138,10 +138,10 @@
                                 </div>
                             @endif
 
-                            @if ($appointment->status === 'batal')
+                            @if ($appointment->status === 'dibatalkan')
                                 <div class="rounded-lg bg-red-50 border border-red-200 p-3">
                                     <p class="text-sm font-semibold text-red-700">
-                                        Transaksi Gagal / Pendaftaran Batal
+                                        Transaksi Gagal / Pendaftaran Dibatalkan
                                     </p>
                                 </div>
                             @endif
@@ -154,7 +154,7 @@
                                 Lihat Detail
                             </a>
 
-                            @if ($appointment->payment && $appointment->payment->status !== 'diverifikasi' && $appointment->status !== 'batal')
+                            @if ($appointment->payment && $appointment->payment->status !== 'diterima' && $appointment->status !== 'dibatalkan')
                                 <a href="{{ route('user.payments.edit', $appointment) }}"
                                     class="block w-full text-center px-4 py-3 bg-amber-400 text-gray-900 rounded-lg hover:bg-amber-500 font-semibold">
                                     Upload Bukti Pembayaran
@@ -217,17 +217,17 @@
                                         <span class="px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                             Menunggu
                                         </span>
-                                    @elseif ($appointment->status === 'diproses')
+                                    @elseif ($appointment->status === 'dikonfirmasi')
                                         <span class="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                                            Diproses
+                                            dikonfirmasi
                                         </span>
                                     @elseif ($appointment->status === 'selesai')
                                         <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
                                             Selesai
                                         </span>
-                                    @elseif ($appointment->status === 'batal')
+                                    @elseif ($appointment->status === 'dibatalkan')
                                         <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                                            Batal
+                                            Dibatalkan
                                         </span>
                                     @else
                                         <span class="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
@@ -241,9 +241,9 @@
                                         <span class="px-3 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
                                             Pending
                                         </span>
-                                    @elseif ($appointment->payment && $appointment->payment->status === 'diverifikasi')
+                                    @elseif ($appointment->payment && $appointment->payment->status === 'diterima')
                                         <span class="px-3 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700">
-                                            Diverifikasi
+                                            Diterima
                                         </span>
                                     @elseif ($appointment->payment && $appointment->payment->status === 'ditolak')
                                         <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
@@ -263,7 +263,7 @@
                                             Detail
                                         </a>
 
-                                        @if ($appointment->payment && $appointment->payment->status !== 'diverifikasi' && $appointment->status !== 'batal')
+                                        @if ($appointment->payment && $appointment->payment->status !== 'diterima' && $appointment->status !== 'dibatalkan')
                                             <a href="{{ route('user.payments.edit', $appointment) }}"
                                                 class="inline-block px-4 py-2 bg-amber-400 text-gray-900 rounded-lg hover:bg-amber-500 text-center">
                                                 Upload Bukti
