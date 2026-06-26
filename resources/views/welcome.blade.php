@@ -371,8 +371,8 @@
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div
                             class="reveal kc-premium-card rounded-3xl p-6 transition hover:-translate-y-1 hover:shadow-md">
-                            <p class="text-4xl font-bold text-emerald-700"><span
-                                    data-counter="{{ $handledPatients }}">0</span>+</p>
+                            <p class="text-4xl font-bold text-emerald-700">
+                            <span>1000</span>+</p>
                             <p class="mt-2 font-semibold text-gray-900">Pasien Ditangani</p>
                         </div>
                         <div
