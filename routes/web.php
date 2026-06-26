@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\Auth\DashboardRedirectController;
 
 use App\Http\Controllers\User\PaymentController as UserPaymentController;
 use App\Http\Controllers\User\AppointmentController as UserAppointmentController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Admin\GalleryController as AdminGalleryController;
 use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointmentController;
 use App\Http\Controllers\Doctor\MedicalNoteController as DoctorMedicalNoteController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -56,16 +58,9 @@ Route::get('/regions/villages/{districtCode}', [RegionController::class, 'villag
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', function () {
-    $role = auth()->user()->role;
-
-    return match ($role) {
-        'admin' => redirect()->route('admin.dashboard'),
-        'dokter', 'doctor' => redirect()->route('doctor.dashboard'),
-        'pasien', 'user' => redirect()->route('user.dashboard'),
-        default => abort(403, 'Role akun tidak dikenali.'),
-    };
-})->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', DashboardRedirectController::class)
+    ->middleware(['auth'])
+    ->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------

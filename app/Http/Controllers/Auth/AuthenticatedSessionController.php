@@ -28,50 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = $request->user();
-        $role = $this->normalizeRole($user->role);
+        $role = $this->normalizeRole($request->user()?->role);
 
-        $intendedUrl = $request->session()->get('url.intended');
-        $path = $intendedUrl ? parse_url($intendedUrl, PHP_URL_PATH) : null;
-
-        if ($role === 'admin') {
-            if ($path && str_starts_with($path, '/admin')) {
-                return redirect()->intended(route('admin.dashboard'));
-            }
-
-            $request->session()->forget('url.intended');
-
-            return redirect()->route('admin.dashboard');
-        }
-
-        if ($role === 'dokter') {
-            if ($path && str_starts_with($path, '/doctor')) {
-                return redirect()->intended(route('doctor.dashboard'));
-            }
-
-            $request->session()->forget('url.intended');
-
-            return redirect()->route('doctor.dashboard');
-        }
-
-        if ($role === 'pasien') {
-            if ($path && str_starts_with($path, '/user')) {
-                return redirect()->intended(route('user.dashboard'));
-            }
-
-            $request->session()->forget('url.intended');
-
-            return redirect()->route('user.dashboard');
-        }
-
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()
-            ->route('login')
-            ->with('error', 'Role akun tidak dikenali. Silakan hubungi admin.');
+        return match ($role) {
+            'admin' => $this->redirectByRole($request, '/admin', 'admin.dashboard'),
+            'dokter' => $this->redirectByRole($request, '/doctor', 'doctor.dashboard'),
+            'pasien' => $this->redirectByRole($request, '/user', 'user.dashboard'),
+            default => $this->logoutUnknownRole($request),
+        };
     }
 
     /**
@@ -89,10 +53,45 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
+     * Redirect user sesuai role.
+     */
+    private function redirectByRole(Request $request, string $allowedPathPrefix, string $dashboardRoute): RedirectResponse
+    {
+        $intendedUrl = $request->session()->get('url.intended');
+        $path = $intendedUrl ? parse_url($intendedUrl, PHP_URL_PATH) : null;
+
+        if ($path && str_starts_with($path, $allowedPathPrefix)) {
+            return redirect()->intended(route($dashboardRoute));
+        }
+
+        $request->session()->forget('url.intended');
+
+        return redirect()->route($dashboardRoute);
+    }
+
+    /**
+     * Logout jika role tidak dikenali.
+     */
+    private function logoutUnknownRole(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->with('error', 'Role akun tidak dikenali. Silakan hubungi admin.');
+    }
+
+    /**
      * Samakan role lama dan role baru.
      */
     private function normalizeRole(?string $role): ?string
     {
+        $role = $role ? strtolower(trim($role)) : null;
+
         return match ($role) {
             'admin' => 'admin',
             'dokter', 'doctor' => 'dokter',

@@ -252,7 +252,7 @@ erDiagram
 *   [x] CRUD Paket Layanan Sunat (oleh Admin).
 *   [x] Pendaftaran Sunat Offline (oleh Admin).
 *   [x] Pendaftaran Sunat Online (oleh Pasien) terintegrasi dropdown wilayah Laravolt Indonesia secara AJAX.
-*   [x] Konfirmasi & Upload Bukti Pembayaran (oleh Pasien).
+*   [x] Konfirmasi & Upload Bukti Pembayaran DP DP (oleh Pasien).
 *   [x] Approval / Reject Bukti Bayar disertai Alasan PemDibatalkanan (oleh Admin).
 *   [x] Monitoring Antrean Harian Pasien per tanggal (oleh Admin).
 *   [x] Manajemen Status Pasien: Menunggu -> dikonfirmasi -> Selesai / Dibatalkan (oleh Admin).

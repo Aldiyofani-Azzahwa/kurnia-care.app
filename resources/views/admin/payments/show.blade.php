@@ -12,7 +12,7 @@
 
         $isAdminRegistration = $patient && (
             $patient->registration_type !== 'online'
-            || !is_null($patient->registered_by_id)
+            || ! is_null($patient->registered_by_id)
             || is_null($patient->user_id)
         );
 
@@ -23,10 +23,21 @@
         $isAppointmentCompleted = $appointment?->status === \App\Models\Appointment::STATUS_SELESAI;
         $isAppointmentCancelled = $appointment?->status === \App\Models\Appointment::STATUS_DIBATALKAN;
 
+        $canAdminUploadProof = $isAdminRegistration
+            && ! $isAccepted
+            && ! $isAppointmentCompleted
+            && ! $isAppointmentCancelled
+            && in_array($payment->status, [
+                \App\Models\Payment::STATUS_PENDING,
+                \App\Models\Payment::STATUS_DITOLAK,
+            ], true);
+
+        $showAdminUploadForm = $canAdminUploadProof && (! $payment->proof_image || $isRejected);
+
         $paymentStatusLabel = match ($payment->status) {
             \App\Models\Payment::STATUS_PENDING => 'Pending',
-            \App\Models\Payment::STATUS_DITERIMA => 'diterima',
-            \App\Models\Payment::STATUS_DITOLAK => 'ditolak',
+            \App\Models\Payment::STATUS_DITERIMA => 'Diterima',
+            \App\Models\Payment::STATUS_DITOLAK => 'Ditolak',
             default => ucfirst($payment->status ?? '-'),
         };
 
@@ -46,9 +57,9 @@
 
         $appointmentStatusLabel = match ($appointment?->status) {
             \App\Models\Appointment::STATUS_MENUNGGU => 'Menunggu',
-            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'dikonfirmasi',
+            \App\Models\Appointment::STATUS_DIKONFIRMASI => 'Dikonfirmasi',
             \App\Models\Appointment::STATUS_SELESAI => 'Selesai',
-            \App\Models\Appointment::STATUS_DIBATALKAN => 'dibatalkan',
+            \App\Models\Appointment::STATUS_DIBATALKAN => 'Dibatalkan',
             default => $appointment?->status ? ucfirst($appointment->status) : '-',
         };
 
@@ -272,7 +283,7 @@
         {{-- BUKTI PEMBAYARAN --}}
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-lg font-semibold text-emerald-700 mb-4">
-                Bukti Pembayaran
+                Bukti Pembayaran DP
             </h3>
 
             @if ($payment->proof_image)
@@ -284,7 +295,7 @@
                         </p>
 
                         <a href="{{ asset('storage/' . $payment->proof_image) }}" target="_blank">
-                            <img src="{{ asset('storage/' . $payment->proof_image) }}" alt="Bukti Pembayaran"
+                            <img src="{{ asset('storage/' . $payment->proof_image) }}" alt="Bukti Pembayaran DP"
                                 class="w-full max-h-[500px] object-contain rounded-xl border border-gray-300 bg-gray-50">
                         </a>
                     </div>
@@ -338,21 +349,33 @@
                         Bukti pembayaran belum tersedia.
                     </p>
 
-                    <p class="text-sm text-gray-500 mt-1">
-                        Admin dapat mengupload bukti pembayaran untuk pendaftaran yang dibuat melalui role admin.
-                    </p>
+                    @if ($isAdminRegistration)
+                        <p class="text-sm text-gray-500 mt-1">
+                            Pendaftaran ini dibuat oleh admin. Admin dapat mengupload bukti pembayaran pada form di bawah.
+                        </p>
+                    @else
+                        <p class="text-sm text-gray-500 mt-1">
+                            Pendaftaran ini dibuat oleh pasien online. Silakan tunggu pasien mengupload bukti pembayaran.
+                        </p>
+                    @endif
                 </div>
+            @endif
 
-                <form action="{{ route('admin.payments.upload-proof', $payment) }}" method="POST" enctype="multipart/form-data"
-                    class="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-5">
+            @if ($showAdminUploadForm)
+                <form action="{{ route('admin.payments.upload-proof', $payment) }}" method="POST"
+                    enctype="multipart/form-data" class="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-5">
                     @csrf
 
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Upload Bukti Pembayaran
+                        {{ $payment->proof_image ? 'Upload Ulang Bukti DP DP' : 'Upload Bukti Pembayaran DP DP' }}
                     </label>
 
                     <input type="file" name="proof_image" accept="image/jpeg,image/png,image/jpg,image/webp" required
                         class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+
+                    <p class="text-xs text-gray-500 mt-2">
+                        Format JPG, JPEG, PNG, atau WEBP. Maksimal 2 MB.
+                    </p>
 
                     @error('proof_image')
                         <p class="mt-2 text-sm text-red-600">
@@ -362,7 +385,7 @@
 
                     <button type="submit"
                         class="mt-4 px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
-                        Upload Bukti Pembayaran
+                        {{ $payment->proof_image ? 'Upload Ulang Bukti' : 'Upload Bukti Pembayaran DP DP' }}
                     </button>
                 </form>
             @endif
@@ -406,9 +429,15 @@
                         Pembayaran ini ditolak.
                     </p>
 
-                    <p class="text-sm text-gray-500 mt-1">
-                        Pasien masih dapat mengunggah ulang bukti pembayaran melalui dashboard pasien.
-                    </p>
+                    @if ($isAdminRegistration)
+                        <p class="text-sm text-gray-500 mt-1">
+                            Karena pendaftaran dibuat oleh admin, admin dapat mengupload ulang bukti pembayaran pada form di atas.
+                        </p>
+                    @else
+                        <p class="text-sm text-gray-500 mt-1">
+                            Pasien masih dapat mengunggah ulang bukti pembayaran melalui dashboard pasien.
+                        </p>
+                    @endif
                 </div>
 
             @elseif ($isAppointmentCancelled)
@@ -425,18 +454,24 @@
                     </p>
                 </div>
 
-            @elseif (!$payment->proof_image)
+            @elseif (! $payment->proof_image)
                 <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                     <p class="text-amber-700 font-medium">
                         Bukti pembayaran belum diupload.
                     </p>
 
-                    <p class="text-sm text-gray-500 mt-1">
-                        Upload bukti pembayaran terlebih dahulu pada bagian Bukti Pembayaran, lalu klik Terima Pembayaran.
-                    </p>
+                    @if ($isAdminRegistration)
+                        <p class="text-sm text-gray-500 mt-1">
+                            Upload bukti pembayaran terlebih dahulu pada form di atas, lalu klik Terima Pembayaran.
+                        </p>
+                    @else
+                        <p class="text-sm text-gray-500 mt-1">
+                            Tunggu pasien mengupload bukti pembayaran melalui dashboard pasien.
+                        </p>
+                    @endif
                 </div>
 
-            @elseif (!$isPending)
+            @elseif (! $isPending)
                 <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
                     <p class="text-gray-700 font-medium">
                         Status pembayaran tidak dapat diubah.

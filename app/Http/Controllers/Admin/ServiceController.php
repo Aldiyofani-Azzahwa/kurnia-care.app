@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Throwable;
 
 class ServiceController extends Controller
 {
+    /**
+     * Menampilkan daftar layanan.
+     */
     public function index(): View
     {
         $services = Service::latest()
@@ -22,11 +27,17 @@ class ServiceController extends Controller
         ]);
     }
 
+    /**
+     * Menampilkan form tambah layanan.
+     */
     public function create(): View
     {
         return view('admin.services.create');
     }
 
+    /**
+     * Menyimpan layanan baru.
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -50,21 +61,45 @@ class ServiceController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2 MB.',
         ]);
 
-        Service::create([
-            'name' => $validated['name'],
-            'slug' => $this->generateUniqueSlug($validated['name']),
-            'description' => $validated['description'] ?? null,
-            'price' => $validated['price'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'image' => $this->storeServiceImage($request),
-            'is_active' => $request->boolean('is_active'),
-        ]);
+        $imagePath = null;
 
-        return redirect()
-            ->route('admin.services.index')
-            ->with('success', 'Layanan berhasil ditambahkan.');
+        try {
+            if ($request->hasFile('image')) {
+                $imagePath = $this->storeServiceImage($request);
+            }
+
+            DB::transaction(function () use ($validated, $request, $imagePath) {
+                Service::create([
+                    'name' => $validated['name'],
+                    'slug' => $this->generateUniqueSlug($validated['name']),
+                    'description' => $validated['description'] ?? null,
+                    'price' => $validated['price'],
+                    'duration_minutes' => $validated['duration_minutes'],
+                    'image' => $imagePath,
+                    'is_active' => $request->boolean('is_active'),
+                ]);
+            });
+
+            return redirect()
+                ->route('admin.services.index')
+                ->with('success', 'Layanan berhasil ditambahkan.');
+
+        } catch (Throwable $e) {
+            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+                Storage::disk('public')->delete($imagePath);
+            }
+
+            report($e);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Layanan gagal ditambahkan. Silakan coba lagi.');
+        }
     }
 
+    /**
+     * Menampilkan form edit layanan.
+     */
     public function edit(Service $service): View
     {
         return view('admin.services.edit', [
@@ -72,6 +107,9 @@ class ServiceController extends Controller
         ]);
     }
 
+    /**
+     * Memperbarui layanan.
+     */
     public function update(Request $request, Service $service): RedirectResponse
     {
         $validated = $request->validate([
@@ -96,44 +134,109 @@ class ServiceController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2 MB.',
         ]);
 
-        $imagePath = $service->image;
+        $oldImagePath = $service->image;
+        $newImagePath = null;
+        $finalImagePath = $oldImagePath;
 
-        if ($request->boolean('remove_image')) {
-            $this->deleteServiceImage($service);
-            $imagePath = null;
+        try {
+            if ($request->hasFile('image')) {
+                $newImagePath = $this->storeServiceImage($request);
+                $finalImagePath = $newImagePath;
+            } elseif ($request->boolean('remove_image')) {
+                $finalImagePath = null;
+            }
+
+            DB::transaction(function () use ($service, $validated, $request, $finalImagePath) {
+                $lockedService = Service::whereKey($service->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $lockedService->update([
+                    'name' => $validated['name'],
+                    'slug' => $this->generateUniqueSlug($validated['name'], $lockedService->id),
+                    'description' => $validated['description'] ?? null,
+                    'price' => $validated['price'],
+                    'duration_minutes' => $validated['duration_minutes'],
+                    'image' => $finalImagePath,
+                    'is_active' => $request->boolean('is_active'),
+                ]);
+            });
+
+            if (
+                $oldImagePath &&
+                $oldImagePath !== $finalImagePath &&
+                Storage::disk('public')->exists($oldImagePath)
+            ) {
+                Storage::disk('public')->delete($oldImagePath);
+            }
+
+            return redirect()
+                ->route('admin.services.index')
+                ->with('success', 'Layanan berhasil diperbarui.');
+
+        } catch (Throwable $e) {
+            if ($newImagePath && Storage::disk('public')->exists($newImagePath)) {
+                Storage::disk('public')->delete($newImagePath);
+            }
+
+            report($e);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Layanan gagal diperbarui. Silakan coba lagi.');
         }
-
-        if ($request->hasFile('image')) {
-            $this->deleteServiceImage($service);
-            $imagePath = $this->storeServiceImage($request);
-        }
-
-        $service->update([
-            'name' => $validated['name'],
-            'slug' => $this->generateUniqueSlug($validated['name'], $service->id),
-            'description' => $validated['description'] ?? null,
-            'price' => $validated['price'],
-            'duration_minutes' => $validated['duration_minutes'],
-            'image' => $imagePath,
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        return redirect()
-            ->route('admin.services.index')
-            ->with('success', 'Layanan berhasil diperbarui.');
     }
 
+    /**
+     * Menghapus layanan.
+     */
     public function destroy(Service $service): RedirectResponse
     {
-        $this->deleteServiceImage($service);
+        if ($service->appointments()->exists()) {
+            return back()->with(
+                'error',
+                'Layanan tidak dapat dihapus karena sudah dipakai appointment. Nonaktifkan layanan jika tidak ingin ditampilkan.'
+            );
+        }
 
-        $service->delete();
+        $oldImagePath = $service->image;
 
-        return redirect()
-            ->route('admin.services.index')
-            ->with('success', 'Layanan berhasil dihapus.');
+        try {
+            DB::transaction(function () use ($service) {
+                $lockedService = Service::whereKey($service->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedService->appointments()->exists()) {
+                    throw new \RuntimeException(
+                        'Layanan tidak dapat dihapus karena sudah dipakai appointment. Nonaktifkan layanan jika tidak ingin ditampilkan.'
+                    );
+                }
+
+                $lockedService->delete();
+            });
+
+            if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+                Storage::disk('public')->delete($oldImagePath);
+            }
+
+            return redirect()
+                ->route('admin.services.index')
+                ->with('success', 'Layanan berhasil dihapus.');
+
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Layanan gagal dihapus. Silakan coba lagi.');
+        }
     }
 
+    /**
+     * Simpan gambar layanan ke storage public.
+     */
     private function storeServiceImage(Request $request): ?string
     {
         if (! $request->hasFile('image')) {
@@ -143,16 +246,17 @@ class ServiceController extends Controller
         return $request->file('image')->store('services', 'public');
     }
 
-    private function deleteServiceImage(Service $service): void
-    {
-        if ($service->image && Storage::disk('public')->exists($service->image)) {
-            Storage::disk('public')->delete($service->image);
-        }
-    }
-
+    /**
+     * Membuat slug unik untuk layanan.
+     */
     private function generateUniqueSlug(string $name, ?int $ignoreId = null): string
     {
         $baseSlug = Str::slug($name);
+
+        if ($baseSlug === '') {
+            $baseSlug = 'layanan';
+        }
+
         $slug = $baseSlug;
         $counter = 1;
 

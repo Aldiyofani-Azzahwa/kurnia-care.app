@@ -20,6 +20,12 @@ class Payment extends Model
     public const STATUS_DITERIMA = 'diterima';
     public const STATUS_DITOLAK = 'ditolak';
 
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_DITERIMA,
+        self::STATUS_DITOLAK,
+    ];
+
     protected $fillable = [
         'appointment_id',
         'amount',

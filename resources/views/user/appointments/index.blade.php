@@ -157,7 +157,7 @@
                             @if ($appointment->payment && $appointment->payment->status !== 'diterima' && $appointment->status !== 'dibatalkan')
                                 <a href="{{ route('user.payments.edit', $appointment) }}"
                                     class="block w-full text-center px-4 py-3 bg-amber-400 text-gray-900 rounded-lg hover:bg-amber-500 font-semibold">
-                                    Upload Bukti Pembayaran
+                                    Upload Bukti Pembayaran DP DP
                                 </a>
                             @endif
                         </div>

@@ -9,6 +9,8 @@ use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class PaymentController extends Controller
 {
@@ -27,7 +29,12 @@ class PaymentController extends Controller
                 ->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
-        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'dibatalkan') {
+        if (
+            in_array($appointment->status, [
+                Appointment::STATUS_DIBATALKAN,
+                'dibatalkan'
+            ], true)
+        ) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pendaftaran sudah dibatalkan, pembayaran tidak bisa diupload.');
@@ -45,12 +52,10 @@ class PaymentController extends Controller
                 ->with('error', 'Pembayaran sudah diterima dan tidak bisa diubah.');
         }
 
-        if (
-            !in_array($appointment->payment->status, [
-                Payment::STATUS_PENDING,
-                Payment::STATUS_DITOLAK,
-            ], true)
-        ) {
+        if (!in_array($appointment->payment->status, [
+            Payment::STATUS_PENDING,
+            Payment::STATUS_DITOLAK,
+        ], true)) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pembayaran ini sudah dikonfirmasi dan tidak bisa diubah.');
@@ -76,7 +81,15 @@ class PaymentController extends Controller
             return back()->with('error', 'Data pembayaran tidak ditemukan.');
         }
 
-        if ($appointment->status === Appointment::STATUS_DIBATALKAN || $appointment->status === 'dibatalkan') {
+        // =========================
+        // VALIDASI STATUS AMAN
+        // =========================
+        if (
+            in_array($appointment->status, [
+                Appointment::STATUS_DIBATALKAN,
+                'dibatalkan'
+            ], true)
+        ) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pendaftaran sudah dibatalkan, pembayaran tidak bisa diupload.');
@@ -94,38 +107,62 @@ class PaymentController extends Controller
                 ->with('error', 'Pembayaran sudah diterima dan tidak bisa diubah.');
         }
 
-        if (
-            !in_array($appointment->payment->status, [
-                Payment::STATUS_PENDING,
-                Payment::STATUS_DITOLAK,
-            ], true)
-        ) {
+        if (!in_array($appointment->payment->status, [
+            Payment::STATUS_PENDING,
+            Payment::STATUS_DITOLAK,
+        ], true)) {
             return redirect()
                 ->route('user.appointments.show', $appointment)
                 ->with('error', 'Pembayaran ini sudah dikonfirmasi dan tidak bisa diubah.');
         }
 
-        if ($appointment->payment->proof_image && Storage::disk('public')->exists($appointment->payment->proof_image)) {
-            Storage::disk('public')->delete($appointment->payment->proof_image);
+        // =========================
+        // UPLOAD FILE AMAN (TEMP FIRST)
+        // =========================
+        $newProofPath = null;
+        $oldProofPath = $appointment->payment->proof_image;
+
+        try {
+            $newProofPath = $request->file('proof_image')->store('payments', 'public');
+
+            DB::transaction(function () use ($appointment, $newProofPath) {
+                $appointment->payment->update([
+                    'proof_image' => $newProofPath,
+                    'status' => Payment::STATUS_PENDING,
+                    'rejection_reason' => null,
+                    'verified_by' => null,
+                    'verified_at' => null,
+                ]);
+
+                $appointment->update([
+                    'status' => Appointment::STATUS_MENUNGGU,
+                ]);
+            });
+
+            // =========================
+            // DELETE OLD FILE AFTER SUCCESS
+            // =========================
+            if ($oldProofPath && Storage::disk('public')->exists($oldProofPath)) {
+                Storage::disk('public')->delete($oldProofPath);
+            }
+
+            return redirect()
+                ->route('user.appointments.show', $appointment)
+                ->with('success', 'Bukti pembayaran berhasil diupload. Silakan tunggu verifikasi admin.');
+
+        } catch (Throwable $e) {
+
+            // rollback file jika gagal DB
+            if ($newProofPath && Storage::disk('public')->exists($newProofPath)) {
+                Storage::disk('public')->delete($newProofPath);
+            }
+
+            report($e);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat upload bukti pembayaran.');
         }
-
-        $proofPath = $request->file('proof_image')->store('payments', 'public');
-
-        $appointment->payment->update([
-            'proof_image' => $proofPath,
-            'status' => Payment::STATUS_PENDING,
-            'rejection_reason' => null,
-            'verified_by' => null,
-            'verified_at' => null,
-        ]);
-
-        $appointment->update([
-            'status' => Appointment::STATUS_MENUNGGU,
-        ]);
-
-        return redirect()
-            ->route('user.appointments.show', $appointment)
-            ->with('success', 'Bukti pembayaran berhasil diupload. Silakan tunggu verifikasi admin.');
     }
 
     /**

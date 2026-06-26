@@ -23,6 +23,13 @@ class Appointment extends Model
     public const STATUS_SELESAI = 'selesai';
     public const STATUS_DIBATALKAN = 'dibatalkan';
 
+    public const STATUSES = [
+        self::STATUS_MENUNGGU,
+        self::STATUS_DIKONFIRMASI,
+        self::STATUS_SELESAI,
+        self::STATUS_DIBATALKAN,
+    ];
+
     protected $fillable = [
         'patient_id',
         'doctor_id',
@@ -98,15 +105,14 @@ class Appointment extends Model
         return $this->hasOne(Payment::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MEDICAL NOTE
-    |--------------------------------------------------------------------------
-    */
-
     public function medicalNote(): HasOne
     {
         return $this->hasOne(MedicalNote::class);
+    }
+
+    public function latestMedicalNote(): HasOne
+    {
+        return $this->hasOne(MedicalNote::class)->latestOfMany();
     }
 
     public function medicalNotes(): HasMany
