@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\Gallery;
-use App\Models\Patient;
 use App\Models\Service;
 use App\Models\Testimonial;
 use App\Services\AppointmentQuotaService;
@@ -44,12 +43,23 @@ class HomeController extends Controller
             ])
             ->count();
 
-        $handledPatients = Appointment::where('status', Appointment::STATUS_SELESAI)
+        /*
+        |--------------------------------------------------------------------------
+        | Statistik Pasien Ditangani
+        |--------------------------------------------------------------------------
+        | Angka ini ditampilkan di welcome.blade.php pada bagian:
+        | "Pasien Ditangani"
+        |
+        | Dibuat minimal 1000 agar tampilan landing page tetap terlihat:
+        | 1000+ Pasien Ditangani
+        |
+        | Jika nanti jumlah appointment selesai lebih dari 1000,
+        | angka akan mengikuti data asli dari database.
+        */
+        $handledPatientsFromDatabase = Appointment::where('status', Appointment::STATUS_SELESAI)
             ->count();
 
-        if ($handledPatients < Patient::count()) {
-            $handledPatients = Patient::count();
-        }
+        $handledPatients = max(1000, $handledPatientsFromDatabase);
 
         $clinicEmail = config('mail.from.address');
 

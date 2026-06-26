@@ -11,36 +11,32 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Tampilkan halaman login.
-     */
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Proses login user.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        $role = $this->normalizeRole($request->user()?->role);
+        $user = $request->user();
+
+        $role = $user?->normalizedRole();
+
+        if (!in_array($role, ['admin', 'dokter', 'pasien'], true)) {
+            return $this->logoutUnknownRole($request);
+        }
 
         return match ($role) {
             'admin' => $this->redirectByRole($request, '/admin', 'admin.dashboard'),
             'dokter' => $this->redirectByRole($request, '/doctor', 'doctor.dashboard'),
             'pasien' => $this->redirectByRole($request, '/user', 'user.dashboard'),
-            default => $this->logoutUnknownRole($request),
         };
     }
 
-    /**
-     * Proses logout user.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
@@ -49,12 +45,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()
+            ->route('home')
+            ->with('success', 'Berhasil logout.');
     }
 
-    /**
-     * Redirect user sesuai role.
-     */
     private function redirectByRole(Request $request, string $allowedPathPrefix, string $dashboardRoute): RedirectResponse
     {
         $intendedUrl = $request->session()->get('url.intended');
@@ -69,9 +64,6 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route($dashboardRoute);
     }
 
-    /**
-     * Logout jika role tidak dikenali.
-     */
     private function logoutUnknownRole(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
@@ -82,21 +74,8 @@ class AuthenticatedSessionController extends Controller
 
         return redirect()
             ->route('login')
-            ->with('error', 'Role akun tidak dikenali. Silakan hubungi admin.');
-    }
-
-    /**
-     * Samakan role lama dan role baru.
-     */
-    private function normalizeRole(?string $role): ?string
-    {
-        $role = $role ? strtolower(trim($role)) : null;
-
-        return match ($role) {
-            'admin' => 'admin',
-            'dokter', 'doctor' => 'dokter',
-            'pasien', 'user' => 'pasien',
-            default => $role,
-        };
+            ->withErrors([
+                'email' => 'Role akun tidak dikenali. Silakan hubungi admin.',
+            ]);
     }
 }

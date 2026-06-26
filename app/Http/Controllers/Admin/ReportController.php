@@ -8,6 +8,7 @@ use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class ReportController extends Controller
@@ -30,73 +31,20 @@ class ReportController extends Controller
         $summaryAppointments = $this->appointmentQuery($startDate, $endDate, $status, $paymentStatus)
             ->get();
 
-        $totalAppointments = $summaryAppointments->count();
+        $summary = $this->buildSummary($summaryAppointments);
+        $serviceRecaps = $this->buildServiceRecaps($summaryAppointments);
 
-        $waitingCount = $summaryAppointments
-            ->where('status', 'menunggu')
-            ->count();
-
-        $processCount = $summaryAppointments
-            ->where('status', 'dikonfirmasi')
-            ->count();
-
-        $doneCount = $summaryAppointments
-            ->where('status', 'selesai')
-            ->count();
-
-        $cancelCount = $summaryAppointments
-            ->where('status', 'dibatalkan')
-            ->count();
-
-        $verifiedPaymentCount = $summaryAppointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
-            ->count();
-
-        $pendingPaymentCount = $summaryAppointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'pending')
-            ->count();
-
-        $rejectedPaymentCount = $summaryAppointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'ditolak')
-            ->count();
-
-        $totalRevenue = $summaryAppointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
-            ->sum(fn ($appointment) => optional($appointment->payment)->amount ?? 0);
-
-        $serviceRecaps = $summaryAppointments
-            ->groupBy(fn ($appointment) => optional($appointment->service)->name ?? 'Tanpa Layanan')
-            ->map(function ($items, $serviceName) {
-                return [
-                    'service_name' => $serviceName,
-                    'total' => $items->count(),
-                    'revenue' => $items
-                        ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
-                        ->sum(fn ($appointment) => optional($appointment->payment)->amount ?? 0),
-                ];
-            })
-            ->values();
-
-        return view('admin.reports.index', compact(
-            'appointments',
-            'type',
-            'date',
-            'month',
-            'startDate',
-            'endDate',
-            'status',
-            'paymentStatus',
-            'totalAppointments',
-            'waitingCount',
-            'processCount',
-            'doneCount',
-            'cancelCount',
-            'verifiedPaymentCount',
-            'pendingPaymentCount',
-            'rejectedPaymentCount',
-            'totalRevenue',
-            'serviceRecaps'
-        ));
+        return view('admin.reports.index', array_merge($summary, [
+            'appointments' => $appointments,
+            'type' => $type,
+            'date' => $date,
+            'month' => $month,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'status' => $status,
+            'paymentStatus' => $paymentStatus,
+            'serviceRecaps' => $serviceRecaps,
+        ]));
     }
 
     public function print(Request $request): View
@@ -111,59 +59,20 @@ class ReportController extends Controller
             ->orderBy('appointment_time')
             ->get();
 
-        $totalAppointments = $appointments->count();
+        $summary = $this->buildSummary($appointments);
+        $serviceRecaps = $this->buildServiceRecaps($appointments);
 
-        $waitingCount = $appointments
-            ->where('status', 'menunggu')
-            ->count();
-
-        $processCount = $appointments
-            ->where('status', 'dikonfirmasi')
-            ->count();
-
-        $doneCount = $appointments
-            ->where('status', 'selesai')
-            ->count();
-
-        $cancelCount = $appointments
-            ->where('status', 'dibatalkan')
-            ->count();
-
-        $verifiedPaymentCount = $appointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
-            ->count();
-
-        $pendingPaymentCount = $appointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'pending')
-            ->count();
-
-        $rejectedPaymentCount = $appointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'ditolak')
-            ->count();
-
-        $totalRevenue = $appointments
-            ->filter(fn ($appointment) => optional($appointment->payment)->status === 'diterima')
-            ->sum(fn ($appointment) => optional($appointment->payment)->amount ?? 0);
-
-        return view('admin.reports.print', compact(
-            'appointments',
-            'type',
-            'date',
-            'month',
-            'startDate',
-            'endDate',
-            'status',
-            'paymentStatus',
-            'totalAppointments',
-            'waitingCount',
-            'processCount',
-            'doneCount',
-            'cancelCount',
-            'verifiedPaymentCount',
-            'pendingPaymentCount',
-            'rejectedPaymentCount',
-            'totalRevenue'
-        ));
+        return view('admin.reports.print', array_merge($summary, [
+            'appointments' => $appointments,
+            'type' => $type,
+            'date' => $date,
+            'month' => $month,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'status' => $status,
+            'paymentStatus' => $paymentStatus,
+            'serviceRecaps' => $serviceRecaps,
+        ]));
     }
 
     private function appointmentQuery(
@@ -173,11 +82,11 @@ class ReportController extends Controller
         ?string $paymentStatus
     ): Builder {
         return Appointment::with([
-                'patient',
-                'doctor',
-                'service',
-                'payment',
-            ])
+            'patient',
+            'doctor',
+            'service',
+            'payment',
+        ])
             ->whereBetween('appointment_date', [$startDate, $endDate])
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
@@ -187,6 +96,88 @@ class ReportController extends Controller
                     $paymentQuery->where('status', $paymentStatus);
                 });
             });
+    }
+
+    private function buildSummary(Collection $appointments): array
+    {
+        $acceptedAppointments = $appointments->filter(function ($appointment) {
+            return optional($appointment->payment)->status === Payment::STATUS_DITERIMA;
+        });
+
+        $totalDpRevenue = $acceptedAppointments->sum(function ($appointment) {
+            return $this->dpAmount($appointment);
+        });
+
+        $totalRevenue = $acceptedAppointments->sum(function ($appointment) {
+            return $this->fullPaymentAmount($appointment);
+        });
+
+        return [
+            'totalAppointments' => $appointments->count(),
+            'waitingCount' => $appointments->where('status', Appointment::STATUS_MENUNGGU)->count(),
+            'processCount' => $appointments->where('status', Appointment::STATUS_DIKONFIRMASI)->count(),
+            'doneCount' => $appointments->where('status', Appointment::STATUS_SELESAI)->count(),
+            'cancelCount' => $appointments->where('status', Appointment::STATUS_DIBATALKAN)->count(),
+
+            'verifiedPaymentCount' => $acceptedAppointments->count(),
+            'pendingPaymentCount' => $appointments->filter(function ($appointment) {
+                return optional($appointment->payment)->status === Payment::STATUS_PENDING;
+            })->count(),
+            'rejectedPaymentCount' => $appointments->filter(function ($appointment) {
+                return optional($appointment->payment)->status === Payment::STATUS_DITOLAK;
+            })->count(),
+
+            'totalDpRevenue' => $totalDpRevenue,
+            'totalRevenue' => $totalRevenue,
+            'totalRemainingRevenue' => max($totalRevenue - $totalDpRevenue, 0),
+        ];
+    }
+
+    private function buildServiceRecaps(Collection $appointments): Collection
+    {
+        return $appointments
+            ->groupBy(function ($appointment) {
+                return optional($appointment->service)->name ?? 'Tanpa Layanan';
+            })
+            ->map(function ($items, $serviceName) {
+                $acceptedItems = $items->filter(function ($appointment) {
+                    return optional($appointment->payment)->status === Payment::STATUS_DITERIMA;
+                });
+
+                $dpRevenue = $acceptedItems->sum(function ($appointment) {
+                    return $this->dpAmount($appointment);
+                });
+
+                $revenue = $acceptedItems->sum(function ($appointment) {
+                    return $this->fullPaymentAmount($appointment);
+                });
+
+                return [
+                    'service_name' => $serviceName,
+                    'total' => $items->count(),
+                    'paid_count' => $acceptedItems->count(),
+                    'dp_revenue' => $dpRevenue,
+                    'revenue' => $revenue,
+                    'remaining_revenue' => max($revenue - $dpRevenue, 0),
+                ];
+            })
+            ->values();
+    }
+
+    private function fullPaymentAmount(Appointment $appointment): float
+    {
+        $servicePrice = (float) (optional($appointment->service)->price ?? 0);
+
+        if ($servicePrice > 0) {
+            return $servicePrice;
+        }
+
+        return $this->dpAmount($appointment);
+    }
+
+    private function dpAmount(Appointment $appointment): float
+    {
+        return (float) (optional($appointment->payment)->amount ?? 0);
     }
 
     private function resolveDateRange(Request $request): array
@@ -208,8 +199,15 @@ class ReportController extends Controller
         }
 
         if ($type === 'custom') {
-            $startDate = $request->input('start_date', today()->startOfMonth()->format('Y-m-d'));
-            $endDate = $request->input('end_date', today()->format('Y-m-d'));
+            $startDate = Carbon::parse($request->input('start_date', today()->startOfMonth()->format('Y-m-d')))
+                ->format('Y-m-d');
+
+            $endDate = Carbon::parse($request->input('end_date', today()->format('Y-m-d')))
+                ->format('Y-m-d');
+
+            if ($startDate > $endDate) {
+                [$startDate, $endDate] = [$endDate, $startDate];
+            }
 
             return [$startDate, $endDate, $type, $date, $month];
         }

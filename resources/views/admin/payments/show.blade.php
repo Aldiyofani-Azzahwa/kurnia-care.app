@@ -12,7 +12,7 @@
 
         $isAdminRegistration = $patient && (
             $patient->registration_type !== 'online'
-            || ! is_null($patient->registered_by_id)
+            || !is_null($patient->registered_by_id)
             || is_null($patient->user_id)
         );
 
@@ -24,15 +24,15 @@
         $isAppointmentCancelled = $appointment?->status === \App\Models\Appointment::STATUS_DIBATALKAN;
 
         $canAdminUploadProof = $isAdminRegistration
-            && ! $isAccepted
-            && ! $isAppointmentCompleted
-            && ! $isAppointmentCancelled
+            && !$isAccepted
+            && !$isAppointmentCompleted
+            && !$isAppointmentCancelled
             && in_array($payment->status, [
                 \App\Models\Payment::STATUS_PENDING,
                 \App\Models\Payment::STATUS_DITOLAK,
             ], true);
 
-        $showAdminUploadForm = $canAdminUploadProof && (! $payment->proof_image || $isRejected);
+        $showAdminUploadForm = $canAdminUploadProof && (!$payment->proof_image || $isRejected);
 
         $paymentStatusLabel = match ($payment->status) {
             \App\Models\Payment::STATUS_PENDING => 'Pending',
@@ -163,6 +163,8 @@
                 <h3 class="text-lg font-semibold text-emerald-700 mb-4">
                     Data Pasien
                 </h3>
+
+                @include('partials.patient-child-photo', ['patient' => $patient])
 
                 <div class="space-y-3 text-sm">
                     <div>
@@ -362,8 +364,8 @@
             @endif
 
             @if ($showAdminUploadForm)
-                <form action="{{ route('admin.payments.upload-proof', $payment) }}" method="POST"
-                    enctype="multipart/form-data" class="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-5">
+                <form action="{{ route('admin.payments.upload-proof', $payment) }}" method="POST" enctype="multipart/form-data"
+                    class="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-5">
                     @csrf
 
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
@@ -454,7 +456,7 @@
                     </p>
                 </div>
 
-            @elseif (! $payment->proof_image)
+            @elseif (!$payment->proof_image)
                 <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
                     <p class="text-amber-700 font-medium">
                         Bukti pembayaran belum diupload.
@@ -471,7 +473,7 @@
                     @endif
                 </div>
 
-            @elseif (! $isPending)
+            @elseif (!$isPending)
                 <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
                     <p class="text-gray-700 font-medium">
                         Status pembayaran tidak dapat diubah.

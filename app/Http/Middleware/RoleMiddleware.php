@@ -11,20 +11,18 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (! $request->user()) {
-            abort(403, 'Anda harus login terlebih dahulu.');
+            return redirect()->route('login');
         }
 
-        $userRole = $this->normalizeRole($request->user()->role);
+        $userRole = $request->user()->normalizedRole();
 
         $allowedRoles = array_filter(array_map(function ($role) {
             return $this->normalizeRole($role);
         }, $roles));
 
-        abort_if(
-            ! $userRole || empty($allowedRoles) || ! in_array($userRole, $allowedRoles, true),
-            403,
-            'Anda tidak memiliki akses ke halaman ini.'
-        );
+        if (! $userRole || empty($allowedRoles) || ! in_array($userRole, $allowedRoles, true)) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
 
         return $next($request);
     }
@@ -34,10 +32,10 @@ class RoleMiddleware
         $role = $role ? strtolower(trim($role)) : null;
 
         return match ($role) {
-            'user', 'pasien' => 'pasien',
-            'doctor', 'dokter' => 'dokter',
             'admin' => 'admin',
-            default => $role,
+            'dokter', 'doctor' => 'dokter',
+            'pasien', 'user' => 'pasien',
+            default => null,
         };
     }
 }

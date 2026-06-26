@@ -33,52 +33,56 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Relasi lama: satu user punya satu patient.
-     * Tetap disimpan agar kode lama tidak error.
-     */
     public function patient(): HasOne
     {
         return $this->hasOne(Patient::class);
     }
 
-    /**
-     * Relasi baru: satu user bisa punya banyak data pasien.
-     */
     public function patients(): HasMany
     {
         return $this->hasMany(Patient::class);
     }
 
-    /**
-     * Relasi user dokter ke data doctor.
-     */
     public function doctor(): HasOne
     {
         return $this->hasOne(Doctor::class);
     }
 
-    /**
-     * Relasi pembayaran yang diverifikasi user admin.
-     */
     public function verifiedPayments(): HasMany
     {
         return $this->hasMany(Payment::class, 'verified_by');
     }
 
+    public function normalizedRole(): ?string
+    {
+        $role = $this->role ? strtolower(trim($this->role)) : null;
+
+        return match ($role) {
+            'admin' => 'admin',
+            'dokter', 'doctor' => 'dokter',
+            'pasien', 'user' => 'pasien',
+            default => null,
+        };
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->normalizedRole() === 'admin';
     }
 
     public function isDoctor(): bool
     {
-        return in_array($this->role, ['dokter', 'doctor'], true);
+        return $this->normalizedRole() === 'dokter';
+    }
+
+    public function isDokter(): bool
+    {
+        return $this->isDoctor();
     }
 
     public function isUser(): bool
     {
-        return in_array($this->role, ['pasien', 'user'], true);
+        return $this->normalizedRole() === 'pasien';
     }
 
     public function isPasien(): bool
