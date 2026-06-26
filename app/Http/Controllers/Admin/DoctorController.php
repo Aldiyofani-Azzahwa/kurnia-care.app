@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Doctor;
 use App\Models\User;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -60,14 +61,14 @@ class DoctorController extends Controller
         return view('admin.doctors.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, SupabaseStorageService $storage): RedirectResponse
     {
         $validated = $request->validate($this->storeRules(), $this->messages());
 
-        $photoPath = null;
+        $photoUrl = null;
 
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('doctors', 'public');
+            $photoUrl = $storage->upload($request->file('photo'), 'doctors');
         }
 
         $user = User::create([
@@ -84,7 +85,7 @@ class DoctorController extends Controller
             'specialist' => $validated['specialist'] ?? null,
             'sip_number' => $validated['sip_number'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'photo' => $photoPath,
+            'photo' => $photoUrl,
             'bio' => $validated['bio'] ?? null,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -113,20 +114,21 @@ class DoctorController extends Controller
         return view('admin.doctors.edit', compact('doctor'));
     }
 
-    public function update(Request $request, Doctor $doctor): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Doctor $doctor,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         $doctor->load('user');
 
         $validated = $request->validate($this->updateRules($doctor), $this->messages());
 
-        $photoPath = $doctor->photo;
+        $photoUrl = $doctor->photo;
 
         if ($request->hasFile('photo')) {
-            if ($doctor->photo && Storage::disk('public')->exists($doctor->photo)) {
-                Storage::disk('public')->delete($doctor->photo);
-            }
+            $this->deleteDoctorPhoto($doctor, $storage);
 
-            $photoPath = $request->file('photo')->store('doctors', 'public');
+            $photoUrl = $storage->upload($request->file('photo'), 'doctors');
         }
 
         if ($doctor->user) {
@@ -136,7 +138,7 @@ class DoctorController extends Controller
                 'phone' => $validated['phone'] ?? null,
             ]);
 
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $doctor->user->update([
                     'password' => Hash::make($validated['password']),
                 ]);
@@ -159,7 +161,7 @@ class DoctorController extends Controller
             'specialist' => $validated['specialist'] ?? null,
             'sip_number' => $validated['sip_number'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'photo' => $photoPath,
+            'photo' => $photoUrl,
             'bio' => $validated['bio'] ?? null,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -169,16 +171,16 @@ class DoctorController extends Controller
             ->with('success', 'Data dokter berhasil diperbarui.');
     }
 
-    public function destroy(Doctor $doctor): RedirectResponse
-    {
+    public function destroy(
+        Doctor $doctor,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         if ($doctor->appointments()->exists()) {
             return back()
                 ->with('error', 'Dokter tidak dapat dihapus karena sudah memiliki riwayat appointment.');
         }
 
-        if ($doctor->photo && Storage::disk('public')->exists($doctor->photo)) {
-            Storage::disk('public')->delete($doctor->photo);
-        }
+        $this->deleteDoctorPhoto($doctor, $storage);
 
         $user = $doctor->user;
 
@@ -193,6 +195,22 @@ class DoctorController extends Controller
             ->with('success', 'Data dokter berhasil dihapus.');
     }
 
+    private function deleteDoctorPhoto(Doctor $doctor, SupabaseStorageService $storage): void
+    {
+        if (! $doctor->photo) {
+            return;
+        }
+
+        if (str_starts_with($doctor->photo, 'http://') || str_starts_with($doctor->photo, 'https://')) {
+            $storage->delete($doctor->photo);
+            return;
+        }
+
+        if (Storage::disk('public')->exists($doctor->photo)) {
+            Storage::disk('public')->delete($doctor->photo);
+        }
+    }
+
     private function storeRules(): array
     {
         return [
@@ -203,7 +221,7 @@ class DoctorController extends Controller
             'specialist' => ['nullable', 'string', 'max:150'],
             'sip_number' => ['nullable', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:30'],
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'bio' => ['nullable', 'string'],
             'is_active' => ['required', 'boolean'],
         ];
@@ -226,7 +244,7 @@ class DoctorController extends Controller
             'specialist' => ['nullable', 'string', 'max:150'],
             'sip_number' => ['nullable', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:30'],
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'bio' => ['nullable', 'string'],
             'is_active' => ['required', 'boolean'],
         ];
@@ -243,7 +261,7 @@ class DoctorController extends Controller
             'password.min' => 'Password minimal 6 karakter.',
 
             'photo.image' => 'File foto harus berupa gambar.',
-            'photo.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
+            'photo.mimes' => 'Foto harus berformat JPG, JPEG, PNG, atau WEBP.',
             'photo.max' => 'Ukuran foto maksimal 2MB.',
 
             'is_active.required' => 'Status dokter wajib dipilih.',
