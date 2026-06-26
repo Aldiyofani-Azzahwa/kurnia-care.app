@@ -14,6 +14,7 @@
             display: none !important;
         }
     </style>
+    @include('partials.vite-assets')
 </head>
 
 <body class="bg-gray-100 text-gray-800">

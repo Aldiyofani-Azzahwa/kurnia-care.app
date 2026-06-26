@@ -90,7 +90,7 @@
         content="Kurnia Care adalah klinik khitan modern dengan pendaftaran online, pelayanan profesional, dan pendekatan ramah anak.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.vite-assets')
 
     <style>
         html {
