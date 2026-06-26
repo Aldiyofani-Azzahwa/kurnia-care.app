@@ -91,6 +91,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @include('partials.vite-assets')
+    <link rel="stylesheet" href="/build/assets/app-BOyNhecd.css">
+    <script type="module" src="/build/assets/app-BjMeHjpC.js"></script>
 
     <style>
         html {
@@ -372,7 +374,8 @@
                         <div
                             class="reveal kc-premium-card rounded-3xl p-6 transition hover:-translate-y-1 hover:shadow-md">
                             <p class="text-4xl font-bold text-emerald-700">
-                            <span>1000</span>+</p>
+                                <span>1000</span>+
+                            </p>
                             <p class="mt-2 font-semibold text-gray-900">Pasien Ditangani</p>
                         </div>
                         <div
@@ -737,12 +740,12 @@
                             @forelse ($galleries as $index => $gallery)
                                 <button type="button" x-show="showAllGallery || {{ $index < 4 ? 'true' : 'false' }}"
                                     x-transition @if ($index >= 4) x-cloak @endif @click="
-                                                                if (window.innerWidth < 768) {
-                                                                    galleryImage = @js(asset('storage/' . $gallery->image));
-                                                                    galleryTitle = @js($gallery->title);
-                                                                    galleryDescription = @js($gallery->description ?? '');
-                                                                }
-                                                            "
+                                                                    if (window.innerWidth < 768) {
+                                                                        galleryImage = @js(asset('storage/' . $gallery->image));
+                                                                        galleryTitle = @js($gallery->title);
+                                                                        galleryDescription = @js($gallery->description ?? '');
+                                                                    }
+                                                                "
                                     class="reveal group relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-xl md:pointer-events-none md:cursor-default">
                                     <img src="{{ asset('storage/' . $gallery->image) }}" alt="{{ $gallery->title }}"
                                         class="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105">
