@@ -18,6 +18,10 @@
       "dest": "/public/images/$1"
     },
     {
+      "src": "/storage/(.*)",
+      "dest": "/public/storage/$1"
+    },
+    {
       "src": "/favicon.ico",
       "dest": "/public/favicon.ico"
     },
