@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Response;
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
@@ -25,6 +26,36 @@ use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointmentContro
 use App\Http\Controllers\Doctor\MedicalNoteController as DoctorMedicalNoteController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 
+
+
+
+Route::get('/storage/{path}', function ($path) {
+    $supabaseUrl = rtrim(config('supabase.url') ?: env('SUPABASE_URL'), '/');
+    $bucket = config('supabase.storage_bucket') ?: env('SUPABASE_STORAGE_BUCKET', 'kurnia-care');
+
+    $path = urldecode($path);
+
+    // Kalau path sudah berbentuk URL Supabase tapi rusak karena jadi /storage/https:/...
+    if (str_starts_with($path, 'https:/') && !str_starts_with($path, 'https://')) {
+        $path = preg_replace('#^https:/+#', 'https://', $path);
+    }
+
+    if (str_starts_with($path, 'http:/') && !str_starts_with($path, 'http://')) {
+        $path = preg_replace('#^http:/+#', 'http://', $path);
+    }
+
+    // Kalau database sudah menyimpan URL lengkap
+    if (str_starts_with($path, 'https://') || str_starts_with($path, 'http://')) {
+        return redirect()->away($path);
+    }
+
+    // Kalau database hanya menyimpan path seperti galleries/namafile.jpg
+    if ($supabaseUrl && $bucket) {
+        return redirect()->away("{$supabaseUrl}/storage/v1/object/public/{$bucket}/{$path}");
+    }
+
+    abort(404);
+})->where('path', '.*');
 
 /*
 |--------------------------------------------------------------------------
