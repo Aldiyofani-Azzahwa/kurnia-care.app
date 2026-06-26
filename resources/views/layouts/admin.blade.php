@@ -15,7 +15,7 @@
         }
     </style>
     @include('partials.vite-assets')
-    <link rel="stylesheet" href="/build/assets/app-BOyNhecd.css">
+    <link rel="stylesheet" href="/build/assets/app-CytRs6b0.css">
     <script type="module" src="/build/assets/app-BjMeHjpC.js"></script>
 
 </head>
