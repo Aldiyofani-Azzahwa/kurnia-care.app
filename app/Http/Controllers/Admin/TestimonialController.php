@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Testimonial;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +26,7 @@ class TestimonialController extends Controller
         return view('admin.testimonials.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, SupabaseStorageService $storage): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -42,11 +43,13 @@ class TestimonialController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2 MB.',
         ]);
 
+        $imageUrl = $this->storeImage($request, $storage);
+
         Testimonial::create([
             'name' => $validated['name'],
             'content' => $validated['content'],
             'rating' => $validated['rating'],
-            'image' => $this->storeImage($request),
+            'image' => $imageUrl,
             'is_active' => $request->boolean('is_active'),
         ]);
 
@@ -62,8 +65,11 @@ class TestimonialController extends Controller
         ]);
     }
 
-    public function update(Request $request, Testimonial $testimonial): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Testimonial $testimonial,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'content' => ['required', 'string'],
@@ -80,23 +86,23 @@ class TestimonialController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2 MB.',
         ]);
 
-        $imagePath = $testimonial->image;
+        $imageUrl = $testimonial->image;
 
         if ($request->boolean('remove_image')) {
-            $this->deleteImage($testimonial);
-            $imagePath = null;
+            $this->deleteImage($testimonial, $storage);
+            $imageUrl = null;
         }
 
         if ($request->hasFile('image')) {
-            $this->deleteImage($testimonial);
-            $imagePath = $this->storeImage($request);
+            $this->deleteImage($testimonial, $storage);
+            $imageUrl = $this->storeImage($request, $storage);
         }
 
         $testimonial->update([
             'name' => $validated['name'],
             'content' => $validated['content'],
             'rating' => $validated['rating'],
-            'image' => $imagePath,
+            'image' => $imageUrl,
             'is_active' => $request->boolean('is_active'),
         ]);
 
@@ -105,9 +111,11 @@ class TestimonialController extends Controller
             ->with('success', 'Testimoni berhasil diperbarui.');
     }
 
-    public function destroy(Testimonial $testimonial): RedirectResponse
-    {
-        $this->deleteImage($testimonial);
+    public function destroy(
+        Testimonial $testimonial,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
+        $this->deleteImage($testimonial, $storage);
 
         $testimonial->delete();
 
@@ -116,18 +124,27 @@ class TestimonialController extends Controller
             ->with('success', 'Testimoni berhasil dihapus.');
     }
 
-    private function storeImage(Request $request): ?string
+    private function storeImage(Request $request, SupabaseStorageService $storage): ?string
     {
         if (! $request->hasFile('image')) {
             return null;
         }
 
-        return $request->file('image')->store('testimonials', 'public');
+        return $storage->upload($request->file('image'), 'testimonials');
     }
 
-    private function deleteImage(Testimonial $testimonial): void
+    private function deleteImage(Testimonial $testimonial, SupabaseStorageService $storage): void
     {
-        if ($testimonial->image && Storage::disk('public')->exists($testimonial->image)) {
+        if (! $testimonial->image) {
+            return;
+        }
+
+        if (str_starts_with($testimonial->image, 'http://') || str_starts_with($testimonial->image, 'https://')) {
+            $storage->delete($testimonial->image);
+            return;
+        }
+
+        if (Storage::disk('public')->exists($testimonial->image)) {
             Storage::disk('public')->delete($testimonial->image);
         }
     }
