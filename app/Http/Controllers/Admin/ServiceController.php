@@ -15,9 +15,6 @@ use Throwable;
 
 class ServiceController extends Controller
 {
-    /**
-     * Menampilkan daftar layanan.
-     */
     public function index(): View
     {
         $services = Service::latest()
@@ -28,17 +25,11 @@ class ServiceController extends Controller
         ]);
     }
 
-    /**
-     * Menampilkan form tambah layanan.
-     */
     public function create(): View
     {
         return view('admin.services.create');
     }
 
-    /**
-     * Menyimpan layanan baru.
-     */
     public function store(
         Request $request,
         SupabaseStorageService $storage
@@ -97,9 +88,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * Menampilkan form edit layanan.
-     */
     public function edit(Service $service): View
     {
         return view('admin.services.edit', [
@@ -107,9 +95,6 @@ class ServiceController extends Controller
         ]);
     }
 
-    /**
-     * Memperbarui layanan.
-     */
     public function update(
         Request $request,
         Service $service,
@@ -183,9 +168,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * Menghapus layanan.
-     */
     public function destroy(
         Service $service,
         SupabaseStorageService $storage
@@ -228,9 +210,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * Simpan gambar layanan ke Supabase Storage.
-     */
     private function storeServiceImage(Request $request, SupabaseStorageService $storage): ?string
     {
         if (! $request->hasFile('image')) {
@@ -240,9 +219,6 @@ class ServiceController extends Controller
         return $storage->upload($request->file('image'), 'services');
     }
 
-    /**
-     * Hapus gambar layanan, baik dari Supabase Storage maupun storage lokal lama.
-     */
     private function deleteServiceImage(?string $imagePath, SupabaseStorageService $storage): void
     {
         if (! $imagePath) {
@@ -259,9 +235,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * Membuat slug unik untuk layanan.
-     */
     private function generateUniqueSlug(string $name, ?int $ignoreId = null): string
     {
         $baseSlug = Str::slug($name);

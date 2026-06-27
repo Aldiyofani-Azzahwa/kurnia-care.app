@@ -24,9 +24,6 @@ use Throwable;
 
 class AppointmentController extends Controller
 {
-    /**
-     * Menampilkan form pendaftaran online.
-     */
     public function create(AppointmentQuotaService $quotaService): View
     {
         return view('user.appointments.create', [
@@ -35,9 +32,6 @@ class AppointmentController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan data pendaftaran online.
-     */
     public function store(
         StoreAppointmentRequest $request,
         AppointmentQuotaService $quotaService,
@@ -193,9 +187,6 @@ class AppointmentController extends Controller
         }
     }
 
-    /**
-     * Menampilkan riwayat pendaftaran pasien milik user login.
-     */
     public function index(): View
     {
         $appointments = Appointment::with(['patient', 'doctor', 'service', 'payment'])
@@ -210,9 +201,6 @@ class AppointmentController extends Controller
         ]);
     }
 
-    /**
-     * Menampilkan detail pendaftaran.
-     */
     public function show(Appointment $appointment): View
     {
         $this->authorizePatientAppointment($appointment);
@@ -230,9 +218,6 @@ class AppointmentController extends Controller
         ]);
     }
 
-    /**
-     * Cek kuota tanggal secara realtime.
-     */
     public function checkQuota(
         Request $request,
         AppointmentQuotaService $quotaService
@@ -254,9 +239,6 @@ class AppointmentController extends Controller
         ]);
     }
 
-    /**
-     * Lengkapi nama wilayah dari tabel Laravolt kalau hidden input nama kosong.
-     */
     private function completeRegionNames(array $validated): array
     {
         $validated['province_name'] = $validated['province_name']
@@ -289,9 +271,6 @@ class AppointmentController extends Controller
             ->value('name');
     }
 
-    /**
-     * Hapus file, baik URL Supabase maupun path storage lokal lama.
-     */
     private function deleteUploadedFile(?string $path, SupabaseStorageService $storage): void
     {
         if (! $path) {
@@ -308,9 +287,6 @@ class AppointmentController extends Controller
         }
     }
 
-    /**
-     * Pastikan appointment milik pasien yang sedang login.
-     */
     private function authorizePatientAppointment(Appointment $appointment): void
     {
         $appointment->loadMissing('patient');

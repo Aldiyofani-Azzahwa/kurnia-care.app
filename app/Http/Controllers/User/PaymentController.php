@@ -15,9 +15,6 @@ use Throwable;
 
 class PaymentController extends Controller
 {
-    /**
-     * Menampilkan halaman upload bukti pembayaran.
-     */
     public function edit(Appointment $appointment): View|RedirectResponse
     {
         $this->authorizePatientAppointment($appointment);
@@ -67,9 +64,6 @@ class PaymentController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan atau mengganti bukti pembayaran.
-     */
     public function update(
         StorePaymentRequest $request,
         Appointment $appointment,
@@ -160,9 +154,6 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * Hapus bukti lama, baik dari Supabase Storage maupun storage lokal lama.
-     */
     private function deleteProofImage(?string $proofPath, SupabaseStorageService $storage): void
     {
         if (! $proofPath) {
@@ -179,9 +170,6 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * Pastikan appointment milik user yang sedang login.
-     */
     private function authorizePatientAppointment(Appointment $appointment): void
     {
         $appointment->loadMissing('patient');
