@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Services\AppointmentQuotaService;
+use App\Services\SupabaseStorageService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
@@ -39,14 +40,17 @@ class AppointmentController extends Controller
      */
     public function store(
         StoreAppointmentRequest $request,
-        AppointmentQuotaService $quotaService
+        AppointmentQuotaService $quotaService,
+        SupabaseStorageService $storage
     ): RedirectResponse {
         $validated = $request->validated();
+
+        $validated = $this->completeRegionNames($validated);
 
         $appointmentDate = Carbon::parse($validated['appointment_date'])->toDateString();
         $lockKey = 'appointment-quota-' . $appointmentDate;
 
-        $photoPath = null;
+        $photoUrl = null;
 
         try {
             return Cache::lock($lockKey, 10)->block(5, function () use (
@@ -54,12 +58,9 @@ class AppointmentController extends Controller
                 $validated,
                 $quotaService,
                 $appointmentDate,
-                &$photoPath
+                $storage,
+                &$photoUrl
             ) {
-                /**
-                 * Cek kuota wajib dilakukan di dalam lock.
-                 * Ini mencegah dua pasien booking bersamaan pada tanggal yang sama.
-                 */
                 if ($quotaService->isFull($appointmentDate)) {
                     return back()
                         ->withInput()
@@ -88,7 +89,7 @@ class AppointmentController extends Controller
                 }
 
                 if ($request->hasFile('child_photo')) {
-                    $photoPath = $request->file('child_photo')->store('patients', 'public');
+                    $photoUrl = $storage->upload($request->file('child_photo'), 'patients');
                 }
 
                 $appointment = DB::transaction(function () use (
@@ -96,12 +97,15 @@ class AppointmentController extends Controller
                     $service,
                     $doctor,
                     $appointmentDate,
-                    $photoPath
+                    $photoUrl
                 ) {
-                    $fullAddress = $validated['village_name'] . ', ' .
-                        $validated['district_name'] . ', ' .
-                        $validated['city_name'] . ', ' .
-                        $validated['province_name'];
+                    $fullAddress = trim(
+                        ($validated['village_name'] ?? '') . ', ' .
+                        ($validated['district_name'] ?? '') . ', ' .
+                        ($validated['city_name'] ?? '') . ', ' .
+                        ($validated['province_name'] ?? ''),
+                        ' ,'
+                    );
 
                     $patient = Patient::create([
                         'user_id' => auth()->id(),
@@ -139,7 +143,7 @@ class AppointmentController extends Controller
                         'facebook' => $validated['facebook'] ?? null,
                         'information_source' => $validated['information_source'] ?? null,
 
-                        'child_photo' => $photoPath,
+                        'child_photo' => $photoUrl,
                     ]);
 
                     $appointment = Appointment::create([
@@ -174,22 +178,18 @@ class AppointmentController extends Controller
                     ->route('user.appointments.show', $appointment)
                     ->with('success', 'Pendaftaran berhasil dibuat. Silakan upload bukti pembayaran DP.');
             });
-
         } catch (LockTimeoutException $e) {
             return back()
                 ->withInput()
                 ->with('error', 'Sistem sedang memproses pendaftaran lain pada tanggal yang sama. Silakan coba lagi.');
-
         } catch (Throwable $e) {
-            if ($photoPath && Storage::disk('public')->exists($photoPath)) {
-                Storage::disk('public')->delete($photoPath);
-            }
+            $this->deleteUploadedFile($photoUrl, $storage);
 
             report($e);
 
             return back()
                 ->withInput()
-                ->with('error', 'Pendaftaran gagal disimpan. Silakan coba lagi.');
+                ->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
@@ -252,6 +252,60 @@ class AppointmentController extends Controller
                 ? 'Kuota tanggal ini sudah penuh.'
                 : 'Kuota masih tersedia.',
         ]);
+    }
+
+    /**
+     * Lengkapi nama wilayah dari tabel Laravolt kalau hidden input nama kosong.
+     */
+    private function completeRegionNames(array $validated): array
+    {
+        $validated['province_name'] = $validated['province_name']
+            ?? $this->regionName('indonesia_provinces', $validated['province_code'] ?? null)
+            ?? '-';
+
+        $validated['city_name'] = $validated['city_name']
+            ?? $this->regionName('indonesia_cities', $validated['city_code'] ?? null)
+            ?? '-';
+
+        $validated['district_name'] = $validated['district_name']
+            ?? $this->regionName('indonesia_districts', $validated['district_code'] ?? null)
+            ?? '-';
+
+        $validated['village_name'] = $validated['village_name']
+            ?? $this->regionName('indonesia_villages', $validated['village_code'] ?? null)
+            ?? '-';
+
+        return $validated;
+    }
+
+    private function regionName(string $table, ?string $code): ?string
+    {
+        if (! $code) {
+            return null;
+        }
+
+        return DB::table($table)
+            ->where('code', $code)
+            ->value('name');
+    }
+
+    /**
+     * Hapus file, baik URL Supabase maupun path storage lokal lama.
+     */
+    private function deleteUploadedFile(?string $path, SupabaseStorageService $storage): void
+    {
+        if (! $path) {
+            return;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            $storage->delete($path);
+            return;
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     /**

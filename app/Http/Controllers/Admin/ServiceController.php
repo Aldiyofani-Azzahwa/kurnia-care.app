@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,8 +39,10 @@ class ServiceController extends Controller
     /**
      * Menyimpan layanan baru.
      */
-    public function store(Request $request): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
@@ -61,21 +64,21 @@ class ServiceController extends Controller
             'image.max' => 'Ukuran gambar maksimal 2 MB.',
         ]);
 
-        $imagePath = null;
+        $imageUrl = null;
 
         try {
             if ($request->hasFile('image')) {
-                $imagePath = $this->storeServiceImage($request);
+                $imageUrl = $this->storeServiceImage($request, $storage);
             }
 
-            DB::transaction(function () use ($validated, $request, $imagePath) {
+            DB::transaction(function () use ($validated, $request, $imageUrl) {
                 Service::create([
                     'name' => $validated['name'],
                     'slug' => $this->generateUniqueSlug($validated['name']),
                     'description' => $validated['description'] ?? null,
                     'price' => $validated['price'],
                     'duration_minutes' => $validated['duration_minutes'],
-                    'image' => $imagePath,
+                    'image' => $imageUrl,
                     'is_active' => $request->boolean('is_active'),
                 ]);
             });
@@ -83,17 +86,14 @@ class ServiceController extends Controller
             return redirect()
                 ->route('admin.services.index')
                 ->with('success', 'Layanan berhasil ditambahkan.');
-
         } catch (Throwable $e) {
-            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
-                Storage::disk('public')->delete($imagePath);
-            }
+            $this->deleteServiceImage($imageUrl, $storage);
 
             report($e);
 
             return back()
                 ->withInput()
-                ->with('error', 'Layanan gagal ditambahkan. Silakan coba lagi.');
+                ->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
@@ -110,8 +110,11 @@ class ServiceController extends Controller
     /**
      * Memperbarui layanan.
      */
-    public function update(Request $request, Service $service): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Service $service,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
@@ -135,13 +138,13 @@ class ServiceController extends Controller
         ]);
 
         $oldImagePath = $service->image;
-        $newImagePath = null;
+        $newImageUrl = null;
         $finalImagePath = $oldImagePath;
 
         try {
             if ($request->hasFile('image')) {
-                $newImagePath = $this->storeServiceImage($request);
-                $finalImagePath = $newImagePath;
+                $newImageUrl = $this->storeServiceImage($request, $storage);
+                $finalImagePath = $newImageUrl;
             } elseif ($request->boolean('remove_image')) {
                 $finalImagePath = null;
             }
@@ -162,36 +165,31 @@ class ServiceController extends Controller
                 ]);
             });
 
-            if (
-                $oldImagePath &&
-                $oldImagePath !== $finalImagePath &&
-                Storage::disk('public')->exists($oldImagePath)
-            ) {
-                Storage::disk('public')->delete($oldImagePath);
+            if ($oldImagePath && $oldImagePath !== $finalImagePath) {
+                $this->deleteServiceImage($oldImagePath, $storage);
             }
 
             return redirect()
                 ->route('admin.services.index')
                 ->with('success', 'Layanan berhasil diperbarui.');
-
         } catch (Throwable $e) {
-            if ($newImagePath && Storage::disk('public')->exists($newImagePath)) {
-                Storage::disk('public')->delete($newImagePath);
-            }
+            $this->deleteServiceImage($newImageUrl, $storage);
 
             report($e);
 
             return back()
                 ->withInput()
-                ->with('error', 'Layanan gagal diperbarui. Silakan coba lagi.');
+                ->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
     /**
      * Menghapus layanan.
      */
-    public function destroy(Service $service): RedirectResponse
-    {
+    public function destroy(
+        Service $service,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         if ($service->appointments()->exists()) {
             return back()->with(
                 'error',
@@ -216,34 +214,49 @@ class ServiceController extends Controller
                 $lockedService->delete();
             });
 
-            if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
-                Storage::disk('public')->delete($oldImagePath);
-            }
+            $this->deleteServiceImage($oldImagePath, $storage);
 
             return redirect()
                 ->route('admin.services.index')
                 ->with('success', 'Layanan berhasil dihapus.');
-
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
-
         } catch (Throwable $e) {
             report($e);
 
-            return back()->with('error', 'Layanan gagal dihapus. Silakan coba lagi.');
+            return back()->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
     /**
-     * Simpan gambar layanan ke storage public.
+     * Simpan gambar layanan ke Supabase Storage.
      */
-    private function storeServiceImage(Request $request): ?string
+    private function storeServiceImage(Request $request, SupabaseStorageService $storage): ?string
     {
         if (! $request->hasFile('image')) {
             return null;
         }
 
-        return $request->file('image')->store('services', 'public');
+        return $storage->upload($request->file('image'), 'services');
+    }
+
+    /**
+     * Hapus gambar layanan, baik dari Supabase Storage maupun storage lokal lama.
+     */
+    private function deleteServiceImage(?string $imagePath, SupabaseStorageService $storage): void
+    {
+        if (! $imagePath) {
+            return;
+        }
+
+        if (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) {
+            $storage->delete($imagePath);
+            return;
+        }
+
+        if (Storage::disk('public')->exists($imagePath)) {
+            Storage::disk('public')->delete($imagePath);
+        }
     }
 
     /**
