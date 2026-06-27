@@ -9,6 +9,7 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Services\AppointmentQuotaService;
+use App\Services\SupabaseStorageService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
@@ -23,9 +24,6 @@ use Throwable;
 
 class PatientController extends Controller
 {
-    /**
-     * Menampilkan daftar pasien.
-     */
     public function index(Request $request): View
     {
         $search = $request->input('search');
@@ -59,14 +57,11 @@ class PatientController extends Controller
 
         $totalPatients = Patient::count();
 
-        $todayRegistrations = Appointment::whereDate('created_at', today())
-            ->count();
+        $todayRegistrations = Appointment::whereDate('created_at', today())->count();
 
-        $pendingAppointments = Appointment::where('status', Appointment::STATUS_MENUNGGU)
-            ->count();
+        $pendingAppointments = Appointment::where('status', Appointment::STATUS_MENUNGGU)->count();
 
-        $completedAppointments = Appointment::where('status', Appointment::STATUS_SELESAI)
-            ->count();
+        $completedAppointments = Appointment::where('status', Appointment::STATUS_SELESAI)->count();
 
         return view('admin.patients.index', compact(
             'patients',
@@ -78,9 +73,6 @@ class PatientController extends Controller
         ));
     }
 
-    /**
-     * Menampilkan form tambah pasien offline.
-     */
     public function create(AppointmentQuotaService $quotaService): View
     {
         return view('admin.patients.create', [
@@ -89,24 +81,29 @@ class PatientController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan pasien offline, appointment, dan payment.
-     */
-    public function store(Request $request, AppointmentQuotaService $quotaService): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        AppointmentQuotaService $quotaService,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         $validated = $request->validate($this->storeRules(), $this->messages());
+
+        $validated = $this->completeRegionNames($validated);
 
         $appointmentDate = Carbon::parse($validated['appointment_date'])->toDateString();
         $lockKey = 'appointment-quota-' . $appointmentDate;
 
-        $photoPath = null;
+        $photoUrl = null;
 
         try {
-            return Cache::lock($lockKey, 10)->block(5, function () use ($request, $validated, $quotaService, $appointmentDate, &$photoPath) {
-                /*
-                 * Cek kuota wajib di dalam lock.
-                 * Ini mencegah pasien offline dan pasien online booking bersamaan sampai kuota lewat batas.
-                 */
+            return Cache::lock($lockKey, 10)->block(5, function () use (
+                $request,
+                $validated,
+                $quotaService,
+                $appointmentDate,
+                $storage,
+                &$photoUrl
+            ) {
                 if ($quotaService->isFull($appointmentDate)) {
                     return back()
                         ->withInput()
@@ -118,7 +115,7 @@ class PatientController extends Controller
                     ->where('id', $validated['service_id'])
                     ->first();
 
-                if (!$service) {
+                if (! $service) {
                     return back()
                         ->withInput()
                         ->with('error', 'Layanan tidak tersedia atau tidak aktif.');
@@ -128,21 +125,24 @@ class PatientController extends Controller
                     ->orderBy('id')
                     ->first();
 
-                if (!$doctor) {
+                if (! $doctor) {
                     return back()
                         ->withInput()
                         ->with('error', 'Belum ada dokter aktif. Silakan tambahkan dokter aktif terlebih dahulu.');
                 }
 
                 if ($request->hasFile('child_photo')) {
-                    $photoPath = $request->file('child_photo')->store('patients', 'public');
+                    $photoUrl = $storage->upload($request->file('child_photo'), 'patients');
                 }
 
-                DB::transaction(function () use ($validated, $service, $doctor, $appointmentDate, $photoPath) {
-                    $fullAddress = $validated['village_name'] . ', ' .
-                        $validated['district_name'] . ', ' .
-                        $validated['city_name'] . ', ' .
-                        $validated['province_name'];
+                DB::transaction(function () use ($validated, $service, $doctor, $appointmentDate, $photoUrl) {
+                    $fullAddress = trim(
+                        ($validated['village_name'] ?? '') . ', ' .
+                        ($validated['district_name'] ?? '') . ', ' .
+                        ($validated['city_name'] ?? '') . ', ' .
+                        ($validated['province_name'] ?? ''),
+                        ' ,'
+                    );
 
                     $patient = Patient::create([
                         'user_id' => null,
@@ -180,7 +180,7 @@ class PatientController extends Controller
                         'facebook' => $validated['facebook'] ?? null,
                         'information_source' => $validated['information_source'] ?? null,
 
-                        'child_photo' => $photoPath,
+                        'child_photo' => $photoUrl,
                     ]);
 
                     $appointment = Appointment::create([
@@ -213,28 +213,21 @@ class PatientController extends Controller
                     ->route('admin.patients.index')
                     ->with('success', 'Pasien offline berhasil didaftarkan oleh admin.');
             });
-
         } catch (LockTimeoutException $e) {
             return back()
                 ->withInput()
                 ->with('error', 'Sistem sedang memproses pendaftaran lain pada tanggal yang sama. Silakan coba lagi.');
-
         } catch (Throwable $e) {
-            if ($photoPath && Storage::disk('public')->exists($photoPath)) {
-                Storage::disk('public')->delete($photoPath);
-            }
+            $this->deleteChildPhoto($photoUrl, $storage);
 
             report($e);
 
             return back()
                 ->withInput()
-                ->with('error', 'Data pasien gagal disimpan. Silakan coba lagi.');
+                ->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Menampilkan detail pasien.
-     */
     public function show(Patient $patient): View
     {
         $patient->load([
@@ -248,9 +241,6 @@ class PatientController extends Controller
         return view('admin.patients.show', compact('patient'));
     }
 
-    /**
-     * Menampilkan form edit pasien.
-     */
     public function edit(Patient $patient): View|RedirectResponse
     {
         if ($this->hasCompletedAppointment($patient)) {
@@ -262,9 +252,6 @@ class PatientController extends Controller
         return view('admin.patients.edit', compact('patient'));
     }
 
-    /**
-     * Memperbarui data pasien.
-     */
     public function update(Request $request, Patient $patient): RedirectResponse
     {
         if ($this->hasCompletedAppointment($patient)) {
@@ -274,6 +261,8 @@ class PatientController extends Controller
         }
 
         $validated = $request->validate($this->updateRules(), $this->messages());
+
+        $validated = $this->completeRegionNames($validated);
 
         try {
             DB::transaction(function () use ($patient, $validated) {
@@ -285,10 +274,13 @@ class PatientController extends Controller
                     throw new RuntimeException('Data pasien sudah selesai tindakan dan tidak bisa diubah.');
                 }
 
-                $fullAddress = $validated['village_name'] . ', ' .
-                    $validated['district_name'] . ', ' .
-                    $validated['city_name'] . ', ' .
-                    $validated['province_name'];
+                $fullAddress = trim(
+                    ($validated['village_name'] ?? '') . ', ' .
+                    ($validated['district_name'] ?? '') . ', ' .
+                    ($validated['city_name'] ?? '') . ', ' .
+                    ($validated['province_name'] ?? ''),
+                    ' ,'
+                );
 
                 $lockedPatient->update([
                     'child_name' => $validated['child_name'],
@@ -327,26 +319,23 @@ class PatientController extends Controller
             return redirect()
                 ->route('admin.patients.index')
                 ->with('success', 'Data pasien berhasil diperbarui.');
-
         } catch (RuntimeException $e) {
             return redirect()
                 ->route('admin.patients.show', $patient)
                 ->with('error', $e->getMessage());
-
         } catch (Throwable $e) {
             report($e);
 
             return back()
                 ->withInput()
-                ->with('error', 'Data pasien gagal diperbarui. Silakan coba lagi.');
+                ->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Menghapus pasien yang belum selesai tindakan.
-     */
-    public function destroy(Patient $patient): RedirectResponse
-    {
+    public function destroy(
+        Patient $patient,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         if ($this->hasCompletedAppointment($patient)) {
             return redirect()
                 ->route('admin.patients.index')
@@ -382,33 +371,22 @@ class PatientController extends Controller
                 $lockedPatient->delete();
             });
 
-            /*
-             * File dihapus setelah DB sukses.
-             * Ini mencegah file hilang jika transaksi database gagal.
-             */
-            if ($childPhotoPath && Storage::disk('public')->exists($childPhotoPath)) {
-                Storage::disk('public')->delete($childPhotoPath);
-            }
+            $this->deleteChildPhoto($childPhotoPath, $storage);
 
             return redirect()
                 ->route('admin.patients.index')
                 ->with('success', 'Data pasien berhasil dihapus.');
-
         } catch (RuntimeException $e) {
             return redirect()
                 ->route('admin.patients.index')
                 ->with('error', $e->getMessage());
-
         } catch (Throwable $e) {
             report($e);
 
-            return back()->with('error', 'Data pasien gagal dihapus. Silakan coba lagi.');
+            return back()->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Cek kuota appointment secara realtime.
-     */
     public function checkQuota(Request $request, AppointmentQuotaService $quotaService): JsonResponse
     {
         $request->validate([
@@ -425,9 +403,6 @@ class PatientController extends Controller
         ]);
     }
 
-    /**
-     * Mengecek apakah pasien sudah punya appointment selesai.
-     */
     private function hasCompletedAppointment(Patient $patient): bool
     {
         return $patient->appointments()
@@ -435,13 +410,58 @@ class PatientController extends Controller
             ->exists();
     }
 
-    /**
-     * Rules untuk tambah pasien offline.
-     */
+    private function completeRegionNames(array $validated): array
+    {
+        $validated['province_name'] = $validated['province_name']
+            ?? $this->regionName('indonesia_provinces', $validated['province_code'] ?? null)
+            ?? '-';
+
+        $validated['city_name'] = $validated['city_name']
+            ?? $this->regionName('indonesia_cities', $validated['city_code'] ?? null)
+            ?? '-';
+
+        $validated['district_name'] = $validated['district_name']
+            ?? $this->regionName('indonesia_districts', $validated['district_code'] ?? null)
+            ?? '-';
+
+        $validated['village_name'] = $validated['village_name']
+            ?? $this->regionName('indonesia_villages', $validated['village_code'] ?? null)
+            ?? '-';
+
+        return $validated;
+    }
+
+    private function regionName(string $table, ?string $code): ?string
+    {
+        if (! $code) {
+            return null;
+        }
+
+        return DB::table($table)
+            ->where('code', $code)
+            ->value('name');
+    }
+
+    private function deleteChildPhoto(?string $photoPath, SupabaseStorageService $storage): void
+    {
+        if (! $photoPath) {
+            return;
+        }
+
+        if (str_starts_with($photoPath, 'http://') || str_starts_with($photoPath, 'https://')) {
+            $storage->delete($photoPath);
+            return;
+        }
+
+        if (Storage::disk('public')->exists($photoPath)) {
+            Storage::disk('public')->delete($photoPath);
+        }
+    }
+
     private function storeRules(): array
     {
         return array_merge($this->patientRules(), [
-            'child_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'child_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
 
             'service_id' => ['required', 'exists:services,id'],
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
@@ -450,17 +470,11 @@ class PatientController extends Controller
         ]);
     }
 
-    /**
-     * Rules untuk update pasien.
-     */
     private function updateRules(): array
     {
         return $this->patientRules();
     }
 
-    /**
-     * Rules dasar data pasien.
-     */
     private function patientRules(): array
     {
         return [
@@ -474,16 +488,16 @@ class PatientController extends Controller
             'disease_history' => ['nullable', 'string'],
 
             'province_code' => ['required', 'string'],
-            'province_name' => ['required', 'string'],
+            'province_name' => ['nullable', 'string'],
 
             'city_code' => ['required', 'string'],
-            'city_name' => ['required', 'string'],
+            'city_name' => ['nullable', 'string'],
 
             'district_code' => ['required', 'string'],
-            'district_name' => ['required', 'string'],
+            'district_name' => ['nullable', 'string'],
 
             'village_code' => ['required', 'string'],
-            'village_name' => ['required', 'string'],
+            'village_name' => ['nullable', 'string'],
 
             'father_name' => ['required', 'string', 'max:150'],
             'mother_name' => ['required', 'string', 'max:150'],
@@ -495,9 +509,6 @@ class PatientController extends Controller
         ];
     }
 
-    /**
-     * Pesan validasi form pasien.
-     */
     private function messages(): array
     {
         return [
@@ -515,7 +526,7 @@ class PatientController extends Controller
             'phone.required' => 'Nomor HP wajib diisi.',
 
             'child_photo.image' => 'File foto anak harus berupa gambar.',
-            'child_photo.mimes' => 'Foto anak harus berformat JPG, JPEG, atau PNG.',
+            'child_photo.mimes' => 'Foto anak harus berformat JPG, JPEG, PNG, atau WEBP.',
             'child_photo.max' => 'Ukuran foto anak maksimal 5MB.',
 
             'service_id.required' => 'Layanan wajib dipilih.',
