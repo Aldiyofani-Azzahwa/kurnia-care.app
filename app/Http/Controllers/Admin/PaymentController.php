@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Payment;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -72,15 +73,18 @@ class PaymentController extends Controller
     /**
      * Upload bukti pembayaran oleh admin.
      */
-    public function uploadProof(Request $request, Payment $payment): RedirectResponse
-    {
+    public function uploadProof(
+        Request $request,
+        Payment $payment,
+        SupabaseStorageService $storage
+    ): RedirectResponse {
         $request->validate([
-            'proof_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'proof_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
             'proof_image.required' => 'Bukti pembayaran wajib diupload.',
             'proof_image.image' => 'File harus berupa gambar.',
             'proof_image.mimes' => 'Format bukti pembayaran harus JPG, JPEG, PNG, atau WEBP.',
-            'proof_image.max' => 'Ukuran bukti pembayaran maksimal 2 MB.',
+            'proof_image.max' => 'Ukuran bukti pembayaran maksimal 5 MB.',
         ]);
 
         $payment->load('appointment');
@@ -109,12 +113,12 @@ class PaymentController extends Controller
         }
 
         $oldProofPath = $payment->proof_image;
-        $newProofPath = null;
+        $newProofUrl = null;
 
         try {
-            $newProofPath = $request->file('proof_image')->store('payments', 'public');
+            $newProofUrl = $storage->upload($request->file('proof_image'), 'payments');
 
-            DB::transaction(function () use ($payment, $newProofPath) {
+            DB::transaction(function () use ($payment, $newProofUrl) {
                 $lockedPayment = Payment::whereKey($payment->id)
                     ->lockForUpdate()
                     ->firstOrFail();
@@ -138,7 +142,7 @@ class PaymentController extends Controller
                 }
 
                 $updateData = [
-                    'proof_image' => $newProofPath,
+                    'proof_image' => $newProofUrl,
                 ];
 
                 if ($lockedPayment->status === Payment::STATUS_DITOLAK) {
@@ -151,22 +155,19 @@ class PaymentController extends Controller
                 $lockedPayment->update($updateData);
             });
 
-            if ($oldProofPath && Storage::disk('public')->exists($oldProofPath)) {
-                Storage::disk('public')->delete($oldProofPath);
-            }
+            $this->deleteProofImage($oldProofPath, $storage);
 
             return redirect()
                 ->route('admin.payments.show', $payment)
                 ->with('success', 'Bukti pembayaran berhasil diupload.');
-
         } catch (Throwable $e) {
-            if ($newProofPath && Storage::disk('public')->exists($newProofPath)) {
-                Storage::disk('public')->delete($newProofPath);
-            }
+            $this->deleteProofImage($newProofUrl, $storage);
 
             report($e);
 
-            return back()->with('error', 'Bukti pembayaran gagal diupload. Silakan coba lagi.');
+            return back()
+                ->withInput()
+                ->with('error', 'ERROR: ' . $e->getMessage());
         }
     }
 
@@ -226,7 +227,6 @@ class PaymentController extends Controller
             return redirect()
                 ->route('admin.payments.show', $payment)
                 ->with('success', 'Pembayaran berhasil diterima dan appointment telah dikonfirmasi.');
-
         } catch (Throwable $e) {
             report($e);
 
@@ -283,11 +283,29 @@ class PaymentController extends Controller
             return redirect()
                 ->route('admin.payments.show', $payment)
                 ->with('success', 'Pembayaran ditolak. Pasien dapat mengunggah ulang bukti pembayaran.');
-
         } catch (Throwable $e) {
             report($e);
 
             return back()->with('error', $e->getMessage() ?: 'Pembayaran gagal ditolak.');
+        }
+    }
+
+    /**
+     * Hapus bukti lama, baik dari Supabase Storage maupun storage lokal lama.
+     */
+    private function deleteProofImage(?string $proofPath, SupabaseStorageService $storage): void
+    {
+        if (! $proofPath) {
+            return;
+        }
+
+        if (str_starts_with($proofPath, 'http://') || str_starts_with($proofPath, 'https://')) {
+            $storage->delete($proofPath);
+            return;
+        }
+
+        if (Storage::disk('public')->exists($proofPath)) {
+            Storage::disk('public')->delete($proofPath);
         }
     }
 }
