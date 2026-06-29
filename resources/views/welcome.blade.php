@@ -498,9 +498,7 @@
                                     {{ $featuredDoctor?->bio ?? 'Profil dokter akan tampil otomatis dari data dokter aktif pada dashboard admin. Deskripsi ini dapat berisi pengalaman, pendekatan pelayanan, dan fokus dokter dalam memberikan tindakan yang aman serta nyaman bagi anak dan keluarga.' }}
                                 </p>
 
-                                <p class="mt-5 text-xs leading-5 text-gray-500">
-                                    Area sertifikat dapat ditambahkan kemudian tanpa mengubah struktur utama homepage.
-                                </p>
+                                
                             </div>
                         </div>
                     </div>
