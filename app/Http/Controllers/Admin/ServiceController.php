@@ -202,7 +202,7 @@ class ServiceController extends Controller
                 ->route('admin.services.index')
                 ->with('success', 'Layanan berhasil dihapus.');
         } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', $e->getMessage()); 
         } catch (Throwable $e) {
             report($e);
 
