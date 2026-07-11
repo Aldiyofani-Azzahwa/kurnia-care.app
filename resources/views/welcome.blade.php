@@ -25,7 +25,7 @@
     $whyCards = [
         [
             'title' => 'Dokter Profesional',
-            'description' => 'Tindakan ditangani oleh dokter berpengalaman dalam layanan khitan modern.',
+            'description' => 'Tindakan ditangani oleh dokter berpengalaman dalam layanan Sunat modern.',
             'icon' => 'M12 14c3.866 0 7 2.239 7 5v1H5v-1c0-2.761 3.134-5 7-5Zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
         ],
         [
@@ -56,7 +56,7 @@
 
     $faqs = [
         [
-            'question' => 'Berapa lama proses khitan?',
+            'question' => 'Berapa lama proses Sunat?',
             'answer' => 'Durasi layanan bergantung pada paket dan kondisi anak. Estimasi durasi dapat dilihat pada kartu layanan saat pendaftaran.',
         ],
         [
@@ -84,10 +84,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kurnia Care - Klinik Khitan Modern</title>
+    <title>Kurnia Care - Sunat Modern Jombang</title>
 
     <meta name="description"
-        content="Kurnia Care adalah klinik khitan modern dengan pendaftaran online, pelayanan profesional, dan pendekatan ramah anak.">
+        content="Kurnia Care adalah Tempat Sunat Modern Jombang dengan pendaftaran online, pelayanan profesional, dan pendekatan ramah anak.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @include('partials.vite-inline')
@@ -185,7 +185,7 @@
                         class="h-12 w-12 rounded-full bg-white object-contain shadow-sm ring-1 ring-gray-200">
                     <div>
                         <p class="text-base font-bold leading-tight text-gray-900">Kurnia Care</p>
-                        <p class="text-xs font-semibold text-emerald-700">Klinik Khitan Modern</p>
+                        <p class="text-xs font-semibold text-emerald-700">Sunat Modern Jombang</p>
                     </div>
                 </a>
 
@@ -264,12 +264,12 @@
                         <div
                             class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/85 px-4 py-2 text-sm font-semibold text-emerald-800 shadow-sm backdrop-blur">
                             <span class="h-2 w-2 rounded-full bg-amber-400"></span>
-                            Pendaftaran khitan modern lebih mudah
+                            Pendaftaran Sunat modern lebih mudah
                         </div>
 
                         <h1
                             class="mt-7 max-w-3xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-                            Khitan Aman, Nyaman dan Profesional
+                            Sunat Aman, Nyaman dan Profesional
                         </h1>
 
                         <div class="kc-gold-line mt-6 h-1 w-28 rounded-full"></div>
@@ -326,7 +326,7 @@
 
                                     <div>
                                         <p class="text-sm text-emerald-50">Kurnia Care</p>
-                                        <p class="text-xl font-bold">Klinik Khitan Modern</p>
+                                        <p class="text-xl font-bold">Sunat Modern Jombang</p>
                                     </div>
                                 </div>
 
@@ -467,7 +467,7 @@
                                 class="flex flex-col justify-center rounded-3xl bg-gradient-to-br from-white via-white to-emerald-50/60 p-5 sm:p-7 lg:p-8">
                                 <div
                                     class="inline-flex w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                                    Dokter Khitan Modern
+                                    Dokter Sunat Modern
                                 </div>
 
                                 <h3 class="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -475,7 +475,7 @@
                                 </h3>
 
                                 <p class="mt-2 text-sm font-semibold text-emerald-700">
-                                    {{ $featuredDoctor?->specialist ?? 'Dokter Khitan Modern' }}
+                                    {{ $featuredDoctor?->specialist ?? 'Dokter Sunat Modern' }}
                                 </p>
 
                                 <div class="mt-5 grid gap-3 sm:grid-cols-2">
@@ -518,7 +518,7 @@
                     <div class="reveal flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                         <div>
                             <p class="text-sm font-bold uppercase tracking-wide text-amber-600">
-                                Layanan Khitan
+                                Layanan Sunat
                             </p>
 
                             <h2 class="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -572,7 +572,7 @@
 
                                         <div
                                             class="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
-                                            Layanan Khitan
+                                            Layanan Sunat
                                         </div>
                                     </div>
 
@@ -923,7 +923,7 @@
                                         </h1>
 
                                         <p class="mt-1 text-sm text-gray-300">
-                                            Klinik Khitan Modern
+                                            Sunat Modern Jombang
                                         </p>
                                     </div>
                                 </div>
@@ -1023,7 +1023,7 @@
                         class="h-12 w-12 rounded-full object-contain ring-1 ring-gray-200">
                     <div>
                         <p class="font-bold text-gray-900">Kurnia Care</p>
-                        <p class="text-sm text-gray-500">Klinik Khitan Modern</p>
+                        <p class="text-sm text-gray-500">Sunat Modern jombang</p>
                     </div>
                 </div>
 
